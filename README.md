@@ -224,6 +224,7 @@ Incoming features :
 - Add and modify the settings from the Webui
 - Delete manually a video clip from the Webui
 - Webui user authentication
+- ADD a new access point with the assistance of the Webui (to be helped with the state of the value in open/close state, etc.)
 - Manage the SMS and mail sending alarm information from the Webui
 - Arm/disable the alarm based on user authentication from a USB Keyboard
 - Wireless communication between the access point monitoring devices (RF :433Mhz)
