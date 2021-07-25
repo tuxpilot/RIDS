@@ -163,34 +163,34 @@ Refresh the page, and it should show you some more icons.
 Click on the "Edit the Global Settings" icon to get in the settings management page
 Here is the list of the settings you can customize
 
-language	Let you set the language of the voice of the alarm
-log_folder	Let you set the folder of the log file
-debug_file	Let you set the name of the log file
-default_alarm_status	Set the alarm in the chosen mode (0 or 1) every time the alarm restart (restart from the service or restart of the entire Raspberry)
-gpio_piezo_number	Let you set the GPIO number where the Piezo is connected to
-user_input_method	Let you set the method for user authentication 
-gpio_user_input_method_circuit_mode	// Let you choose between the RFID reader authentication, or a dry contact incoming information if you have an alternate authentication method.
-gpio_user_input_method	//Let you enter the BCM GPIO of the authentication method if you have a dry contact coming from an alternate authentication method
-silent_alarm	//Let you choose wheter you want to have a audible alarm if an intrusion is detected or you just want to be warned silently
-silent_buzzer	//Let you choose wheter you want to have the piezo active or not at all.
-image_capture_folder	//Let you set up the folder of the folder where the images will be stored if you choose to have image clips on triggered even
-alarm_temporisation_delay	//Let you set up the time to let you get out of your house after you armed the alarm.
-alarm_siren_max_time	//Let you choose the maximum time of the audio alarm to be running if an intrusion is detected (prevent the alarm to ring forever if an intrusion is detected... can be useful if you're on vacation far away and you have no way of turning it off while having neighboors who will have to listen to it until you get back...)
-debug_activated	//Let you choose if you want the debug file to be filled or not. Warning, the file get big very quickly! Warning! The debug file has no link with the event log!
-gpio_status_led_pwr	//Let you set the GPIO number where the power pin of the RGB LED is connected to
-gpio_status_led_red	//Let you set the GPIO number where the RED pin of the RGB LED is connected to
-gpio_status_led_blue	//Let you set the GPIO number where the BLUE pin of the RGB LED is connected to
-gpio_status_led_green	//Let you set the GPIO number where the GREEN pin of the RGB LED is connected to
-gpio_status_led_enabled	//Let you set wether you have a RGB LED or not
-send_sms_on_reboot	//Let you set if you want to receive a SMS if the Raspberry was restarted
-video_capture_enabled	//Set it to yes if you have a RTSP camera enabled and you want the alarm to use it
-video_capture_timing	//Let you set the length of the clips the alarm captures in the format (HH:MM:SS)
-video_capture_password	//Password of the RTSP camera 
-video_capture_username	//Username of the RTSP camera
-video_capture_url	//URL of the RTSP camera
-video_capture_on_alert_only	//Choose yes if you want the alarm to capture video clips only on alert triggered events. If "No", then the alarm captures video clips on every events (door opening even if the alarm is not armed for example)
-trigger_alarm_on_lost_or_stolen_card	//Trigger the full intrusion alarm if a lost or stolen RFID card is detected while the alarm is armed.
-silent_voice	//Let you enable or disable the voices of the alarm on every event (alarm arming, disarming, entering, management mode, etc. )
+- language	Let you set the language of the voice of the alarm
+- log_folder	Let you set the folder of the log file
+- debug_file	Let you set the name of the log file
+- default_alarm_status	Set the alarm in the chosen mode (0 or 1) every time the alarm restart (restart from the service or restart of the entire Raspberry)
+- gpio_piezo_number	Let you set the GPIO number where the Piezo is connected to
+- user_input_method	Let you set the method for user authentication 
+- gpio_user_input_method_circuit_mode	// Let you choose between the RFID reader authentication, or a dry contact incoming information if you have an alternate - authentication method.
+- gpio_user_input_method	//Let you enter the BCM GPIO of the authentication method if you have a dry contact coming from an alternate authentication method
+- silent_alarm	//Let you choose wheter you want to have a audible alarm if an intrusion is detected or you just want to be warned silently
+- silent_buzzer	//Let you choose wheter you want to have the piezo active or not at all.
+- image_capture_folder	//Let you set up the folder of the folder where the images will be stored if you choose to have image clips on triggered even
+- alarm_temporisation_delay	//Let you set up the time to let you get out of your house after you armed the alarm.
+- alarm_siren_max_time	//Let you choose the maximum time of the audio alarm to be running if an intrusion is detected (prevent the alarm to ring forever if an intrusion is detected... can be useful if you're on vacation far away and you have no way of turning it off while having neighboors who will have to listen to it until you get back...)
+- debug_activated	//Let you choose if you want the debug file to be filled or not. Warning, the file get big very quickly! Warning! The debug file has no link with the event log!
+- gpio_status_led_pwr	//Let you set the GPIO number where the power pin of the RGB LED is connected to
+- gpio_status_led_red	//Let you set the GPIO number where the RED pin of the RGB LED is connected to
+- gpio_status_led_blue	//Let you set the GPIO number where the BLUE pin of the RGB LED is connected to
+- gpio_status_led_green	//Let you set the GPIO number where the GREEN pin of the RGB LED is connected to
+- gpio_status_led_enabled	//Let you set wether you have a RGB LED or not
+- send_sms_on_reboot	//Let you set if you want to receive a SMS if the Raspberry was restarted
+- video_capture_enabled	//Set it to yes if you have a RTSP camera enabled and you want the alarm to use it
+- video_capture_timing	//Let you set the length of the clips the alarm captures in the format (HH:MM:SS)
+- video_capture_password	//Password of the RTSP camera 
+- video_capture_username	//Username of the RTSP camera
+- video_capture_url	//URL of the RTSP camera
+- video_capture_on_alert_only	//Choose yes if you want the alarm to capture video clips only on alert triggered events. If "No", then the alarm captures video clips on every events (door opening even if the alarm is not armed for example)
+- trigger_alarm_on_lost_or_stolen_card	//Trigger the full intrusion alarm if a lost or stolen RFID card is detected while the alarm is armed.
+- silent_voice	//Let you enable or disable the voices of the alarm on every event (alarm arming, disarming, entering, management mode, etc. )
 
 
 
@@ -202,7 +202,6 @@ You need to enter the following informations in order to let the alarm manage it
 - Access point GPIO Number	Enter the BCM GPIO number where you connected your Access point door opening detector 
 - GPIO value when access point is closed	Enter the value the GPIO reads when the access point is closed
 - Temporised access point?	Let you choose whether the alarm gets off immediatly if the access point is detected as open, or if you want to let some time for someone to authenticate first (ie: you may want to choose 0 for a windows since normally people don't get in your house from the window...)
-
 
 
 
