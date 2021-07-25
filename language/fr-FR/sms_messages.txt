@@ -1,0 +1,2 @@
+intrusion='Alerte, intrusion détectée!'
+central_rebooted='Attention, la centrale a été redémarrée!'
