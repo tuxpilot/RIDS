@@ -29,11 +29,15 @@ It has been developped on a Raspberry Pi 3b+.
 
 The detection system rely upon detecting a changing state in the GPIOs and reading the human interactions through a RFID reader.
 This alarm is not yet compatible with wireless detectors such as 433Mhz wireless movements detectors and doors opening detectors : that feature is still being tested and under development.
+For the moment, the alarm can send SMS through the OVH SMS API only.
 For the moment, it is a 100% wired alarm.
 
 It can work with no internet access at all, but must be put safely behind a secured firewall.
 All the configuration is to be made from the Webui.
 For convenience and usability, all the sounds and vocal annoucements from the alarm are both in English and French, but the documentation and the configuration are in English only for the moment.
+
+
+
 
 
 
@@ -223,6 +227,7 @@ Incoming features :
 - Manage the SMS and mail sending alarm information from the Webui
 - Arm/disable the alarm based on user authentication from a USB Keyboard
 - Wireless communication between the access point monitoring devices (RF :433Mhz)
-
+- Let you choose another SMS sender than OVH (Twilio, RaspiSMS, etc.)
+- Let you choose to send SMS from a dedicated device (managed with minicom)
 
 
