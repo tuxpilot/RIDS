@@ -1,0 +1,12 @@
+# To install in /etc/systemd/system
+[Unit]
+Description=RFID_Reader
+
+[Service]
+WorkingDirectory=/home/pi/alarm/
+ExecStart=/bin/python3 rfid_reader.py
+Restart=always
+User=pi
+
+[Install]
+WantedBy=multi-user.target
