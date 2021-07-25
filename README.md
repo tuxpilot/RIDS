@@ -1,7 +1,7 @@
 # RIDS
 WARNING !!!
 DO NOT use it as it is until the README.md says otherwize!
-This Git repository is just a giot repository!
+This Git repository is just a git repository!
 This project is not to be used as a working project at all!!
 Many features and many functionnalities makes it not sure enough to be used as a reliable alarm system!
 
