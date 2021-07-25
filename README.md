@@ -6,13 +6,13 @@ This project is not to be used as a working project at all!!
 Many features and many functionnalities makes it not sure enough to be used as a reliable alarm system!
 
 
-Before anything!
-Yes!!! It is messy!
-Yes it is not optimised!
-Yes it is shell!
-Yes it is PHP and not with the best practices!
-No i'm not a developer, i'm an adminsys and i do it on my rest time with my knowledge of scripting of being an adminsys!
-It is a POC! So it will be probably optimised with a better language (like C) in the future.
+Before anything!!!
+- Yes!!! It is messy!
+- Yes it is not optimised!
+- Yes it is shell!
+- Yes it is PHP and not with the best practices!
+- No i'm not a developer, i'm an adminsys and i do it on my rest time with my knowledge of scripting of being an adminsys!
+- It is a POC! So it will be probably optimised with a better language (like C) in the future.
 
 ________________________________________________________________________________________
 ----------------------------------------------------------------------------------------
