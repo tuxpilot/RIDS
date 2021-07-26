@@ -9,10 +9,7 @@
 
 
 
-echo "" > rfid_reader_capture.txt
-sudo systemctl restart rfid_reader.service
-
-# functions
+# List of all the functions 
 
 RGB_led_status(){
 	if [[ "${gpio_status_led_enabled}" -eq 1 ]]
@@ -119,6 +116,8 @@ RGB_led_status(){
 		fi
 }
 
+
+# Function made to check the state of every access point which is declared in the system.
 check_gpio_point_monitoring(){
 	while read -a row
 		do 	monitoring_gpio_number="${row[1]}"
@@ -171,7 +170,10 @@ check_gpio_point_monitoring(){
 	done <<< $(sql_request_RO "select * from GPIO")
 }
 
+
+# Function made to send SMS based on a list of recipients in the database, and the SMS API from OVH (paid functionnality, transiting through the web).
 send_sms(){
+	# We retrieve the datas for every recipient for who the setting 'SEND_SMS' is set to 1, and we send a SMS which content is based on the event which triggered the function.
 	while read -a row
 		do	FIRST_NAME="${row[1]}"
 			LAST_NAME="${row[2]}"
@@ -179,15 +181,21 @@ send_sms(){
 			SEND_EMAIL="${row[4]}"
 			SMS_NUMBER="${row[5]}"
 			EMAIL_ADDRESS="${row[6]}"
+			# Based on the argument {1} retrieved from the function, we fetch the body of the sms and we send it to the recipient
 			sms_message_body=$(cat language/"${language}"/sms_messages.txt | grep "${1}" | awk -F '=' '{ print $2 }' )
 			if [[ "${sms_sent}" -ne 1 && "${SEND_SMS}" -eq 1 ]]
 				then	php bin/OVH_API/php-ovh-dep/sms-sender.php "${SMS_NUMBER}" "${sms_message_body}" & disown >> /dev/null 2>&1						
 			fi
+			# We add to the database the information regarding the fact that we just sent a SMS
 			sql_request_RW "UPDATE ALERT_TRACKING SET LAST_SMS_TIMESTAMP = `date +%s`"
 			debug "date +%Y_%m_%d__@__%H:%M_sent-to_${recipient_name}_AND_MESSAGE_${sms_message_body}"
 	done <<< $(sql_request_RO "select * from ALERTS_RECIPIENTS")
 }
 
+
+# Function made to play pre-recorded TTS voices, made to announce what the alarm is doing, and have a better user experience.
+# 	This function is available only if in the settings, the value "silent_voice" is set to 0.
+#	Based on the setting value 'language' the voices are played in the selected language. If no laguage suits you, you are able to create it.
 sound_player(){
 	if [[ "${silent_voice}" -eq 0 ]]
 		then	if [[ "${alarm_status}" -ne 4 && "${alarm_status}" -ne 3 ]]
@@ -310,7 +318,7 @@ rfid_reader(){
 }
 
 
-
+# Function made to set on and off the Piezo buzzer with an alternate rythme //This function is available only if in the settings, the value "silent_buzzer" is set to 0.
 piezo_alarm_sound(){
 	if [[ "${2}" == "notification" && "${silent_buzzer}" -eq 0 ]]
 		then	./piezo_alarm_sound.sh "${1}" "${gpio_piezo_number}" & disown
@@ -320,6 +328,7 @@ piezo_alarm_sound(){
 	fi
 }
 
+# Function made to initiate necessary items and GPIOs related to the way of the users have to authenticate (RFID, external system link with a dry_contact, etc.)
 initiate_user_input(){
 	if [[ $(sql_request_RO "select user_input_method from SETTINGS") == "dry_contact" ]]
 		then	gpio_user_input_method=$(sql_request_RO "select gpio_user_input_method from SETTINGS")
@@ -334,6 +343,7 @@ initiate_user_input(){
 	fi
 }
 
+# Function made to capture still images from an IP camera
 capture_image_cctv(){
     outfilename=`date +"img-%Y-%m-%d_%H-%M-%S.jpg"`
 	ffmpeg -loglevel fatal -rtsp_transport tcp -i "${video_capture_url}" -r 1 -vframes 1 "${image_capture_folder}${outfilename}"
@@ -341,13 +351,18 @@ capture_image_cctv(){
 }
 
 
+# Function set to capture the stream from a Ip Camera, streaming with RTSP functionnality // This function is available only if in the settings, the value "video_capture_enabled" is set to 1
+# By definition, if their is an IP Camera available and linked to the system, everytime an 'alert' event is detected, a video capture is made. Only if their is a notification kind of event and the 'video_capture_on_alert_only' value is set to 1 in the settings, then no video is made.
 capture_video_cctv(){
 	if [[ "${video_capture_enabled}" -eq 1 ]]
-		then	cctv_actual_filename=$(date +%Y-%m-%d_%H-%M-%S.mp4)
+		then	# Setting up the name of the video clip
+				cctv_actual_filename=$(date +%Y-%m-%d_%H-%M-%S.mp4)
+				# If the argument is NOT 'alert' AND if the setting 'video_capture_on_alert_only' is set to 0 (disabled), then we capture the stream and put it in a video file, and we upload the datas to the database to be able to retrieve it in the WebUI
 				if [[ "${1}" -ne "alert" && "${video_capture_on_alert_only}" -eq 0 ]]
 					then	nohup ffmpeg -t "${video_capture_timing}" -i rtsp://"${video_capture_username}":"${video_capture_password}"@"${video_capture_url}" -c copy -map 0 -f segment -segment_time 600 -segment_format mp4 -strftime 1 "cctv_captures/${cctv_actual_filename}" -s '1920x1080' &
-							sql_request_RW "INSERT INTO CCTV_CAPTURES ( ID, FILENAME, TRIGGERING_EVENT ) VALUES ( NULL, '', '${1}' )"
+							sql_request_RW "INSERT INTO CCTV_CAPTURES ( ID, FILENAME, TRIGGERING_EVENT ) VALUES ( NULL, '${cctv_actual_filename}', '${1}' )"
 				fi    
+				# If the argument is 'alert', then we capture the stream and put it in a video file, and we upload the datas to the database to be able to retrieve it in the WebUI
 				if [[ "${1}" -eq "alert" ]]
 					then	nohup ffmpeg -t "${video_capture_timing}" -i rtsp://"${video_capture_username}":"${video_capture_password}"@"${video_capture_url}" -c copy -map 0 -f segment -segment_time 600 -segment_format mp4 -strftime 1 "cctv_captures/${cctv_actual_filename}" -s '1920x1080' &
 							sql_request_RW "INSERT INTO CCTV_CAPTURES ( ID, FILENAME, TRIGGERING_EVENT ) VALUES ( NULL, '${cctv_actual_filename}', '${1}' )"
@@ -357,12 +372,14 @@ capture_video_cctv(){
 
 
 
+# Function set to kill a specific job which was detached from the script with the 'disown' command
 kill_specific_job(){
 	jobs | grep "${1}" | awk '{print substr($1,2,1)}' | while IFS= read -r job_number_to_kill; do
 		kill "%${job_number_to_kill}"
 	done
 }
 
+# Function to write datas in a .txt debug file // This function is available only if in the settings, the value "debug_activated" is set to 1
 debug(){
 	if [[ "${debug_activated}" -eq 1 ]]
 		then	date +%Y_%m_%d__@__%H:%M:%S" / ${1}" >> "${debug_path}" 2>&1
@@ -373,24 +390,27 @@ event_log(){
 	sql_request_RW "INSERT INTO EVENT_LOG ( ID, LOG_TIMESTAMP, EVENT_LOG_ILLUSTRATION, LOG_CONTENT ) VALUES ( NULL, NOW(), '${1}', '${2}' )"
 }
 
-
+# Function with a Read-Only user to fetch mysql datas from the database
 sql_request_RO(){ 
 	mysql -u alarm_read_only crids -sN -e "${1};" -p"${ropswd}";
 }
 
+# Function with a Read-Write user to get mysql datas and write datas in the database
 sql_request_RW(){ 
 	mysql -u alarm_read_write crids -sN -e "${1};" -p"${rwpswd}";
 }
 
+# Function to retrieve the timestamp of the last time a SMS was sent
 timestamp_last_sms(){
 	sql_request_RO "SELECT LAST_SMS_TIMESTAMP FROM ALERT_TRACKING"
 }
 
+# Function to know how much seconds have elapsed since the last time a SMS was sent
 check_timestamp_last_sms(){
 	expr $(date +%s) - $(timestamp_last_sms)
 }
 
-
+# Function to 'declare' and initiate all the variables and settings which will be used in the script
 global_settings_load_up(){
 	ropswd='password'
 	rwpswd='password'
@@ -416,29 +436,32 @@ global_settings_load_up(){
 	alarm_temporisation_delay=$(sql_request_RO "select alarm_temporisation_delay from SETTINGS")
 	alarm_siren_max_time=$(sql_request_RO "select alarm_siren_max_time from SETTINGS")
 	send_sms_on_reboot=$(sql_request_RO "select send_sms_on_reboot from SETTINGS")
-	disarm_alarm_password=$(sql_request_RO "select send_sms_on_reboot from SETTINGS")
 	video_capture_on_alert_only=$(sql_request_RO "select video_capture_enabled from SETTINGS")
 	video_capture_on_alert_only=$(sql_request_RO "select video_capture_on_alert_only from SETTINGS")
 	image_capture_folder=$(sql_request_RO "select image_capture_folder from SETTINGS")
 	trigger_alarm_on_lost_or_stolen_card=$(sql_request_RO "select trigger_alarm_on_lost_or_stolen_card from SETTINGS")
 	gpio -g mode "${gpio_piezo_number}" out
 	gpio -g write "${gpio_piezo_number}" 0
+	echo "" > rfid_reader_capture.txt
+	sudo systemctl restart rfid_reader.service
 }
 
+# We call the function to load up all the global settings
 global_settings_load_up
 
-
-if [[ $(awk '{print $1}' /proc/uptime | awk -F '.' '{ print $1 }') -lt 120 && sent_sms_after_reboot -ne 1 ]]
+# This is the point where we check if the system was rebooted less than 2 minutes ago.
+#	Since the Rpi is not supposed to be rebooted, and if the setting value 'send_sms_on_reboot' is set to 1 (enable), then we send a SMS because their was an unexpected event which might be sabotage
+if [[ $(awk '{print $1}' /proc/uptime | awk -F '.' '{ print $1 }') -lt 120 && sent_sms_after_reboot -ne 1 && "${send_sms_on_reboot}" -eq 1 ]]
 	then	sql_request_RW "UPDATE ALERT_TRACKING SET LAST_SMS_TIMESTAMP = `date +%s`"
 			send_sms central_rebooted
 			sound_player message_alarm_central_rebooted
 			# capture_image_cctv
 fi
 
-
+# Everytime the Rasberry restart or the service restart, we need to know it. So we add this as an event to the event log.
 event_log "alarm_restart_loading.png" "The alarm finished to load the parameters, the alarm is starting now in the status ${default_alarm_status}"
 
-
+# The system is based on a infinite loop, with time spacing to prevent it from overloading the OS
 while true; do
 	sleep 0.8
 	debug "_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-GENERAL LOOP START_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-" 
@@ -446,7 +469,7 @@ while true; do
 	debug "rfid_reader_result = ${rfid_reader_result} // alarm_status = ${alarm_status} // last_alarm_known_status = ${last_alarm_known_status} // password_attempt = ${password_attempt} // sms_sent = ${sms_sent}"
 	arming_cancellation=0
 
-
+	# This is the alarm state where the alarm is not active and waiting for being armed or being under maintenance.
 	if [[ "${alarm_status}" -eq 0 ]]
 		then	override_mode=$(sql_request_RO "select central_mode_override from SETTINGS")
 				sql_request_RW "UPDATE ALARM_TRACKING SET CURRENT_STATUS = '${alarm_status}'"
@@ -485,7 +508,7 @@ while true; do
 				check_gpio_point_monitoring
 	fi
 
-
+	# This is the alarm state where the alarm is arming itself. The arming consists in making a self diagnostic of all the access point state, to make sure they are all closed, and let the user get out of the house before considering any opening of an access point being an possible intrusion
 	if [[ "${alarm_status}" -eq 1 ]]
 		then	debug "We are in the status 1"
 				sql_request_RW "UPDATE ALARM_TRACKING SET CURRENT_STATUS = '${alarm_status}'"
@@ -534,7 +557,7 @@ while true; do
 				rfid_reader_result=0
 	fi
 
-
+	# This is the alarm state where the alarm is active and monitoring all the active access points.
 	if [[ "${alarm_status}" -eq 2 ]]
 		then	debug "We are in the status 2" 
 				sql_request_RW "UPDATE ALARM_TRACKING SET CURRENT_STATUS = '${alarm_status}'"
@@ -556,7 +579,7 @@ while true; do
 				rfid_reader_result=0
 	fi
 
-
+	# This is the alarm state where the alarm detected the opening of a temporised access point (ie :the front door), and is waiting for the user to authenticate as a legit human, getting inside the protected perimeter.
 	if [[ "${alarm_status}" -eq 3 ]]
 		then	debug "We are in the status 3"
 				last_call_sent=0
@@ -600,6 +623,7 @@ while true; do
 				rfid_reader_result=0
 	fi
 
+	# This is the alarm state where the alarm has detected a real intrusion!
 	if [[ "${alarm_status}" -eq 4 ]]
 		then	debug "We are in the status 4" 
 				event_log "alarm_siren_on.png" "Intrusion alarm was triggered!"
@@ -625,6 +649,7 @@ while true; do
 				rfid_reader_result=0
 	fi
 	
+	# This is the alarm state where the alarm is under maintenance, letting you see and modify the settings.
 	if [[ "${alarm_status}" -eq 5 ]]
 		then	debug "We are in the status 5" 
 				rfid_reader 5
