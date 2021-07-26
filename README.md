@@ -230,5 +230,7 @@ Incoming features :
 - Wireless communication between the access point monitoring devices (RF :433Mhz)
 - Let you choose another SMS sender than OVH (Twilio, RaspiSMS, etc.)
 - Let you choose to send SMS from a dedicated device (managed with minicom)
+- Let you set multiple IP cameras to the system
+- Let you monitor the stream of the IP Cameras in real time, like in a security control center.
 
 
