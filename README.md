@@ -232,5 +232,7 @@ Incoming features :
 - Let you choose to send SMS from a dedicated device (managed with minicom)
 - Let you set multiple IP cameras to the system
 - Let you monitor the stream of the IP Cameras in real time, like in a security control center.
+- Let you make groups of access points inside 'zones', to be able to secure a specific perimeter while some others are not, letting you access the unprotected perimeters without triggering the whole alarm.
+- Let you upload a .Jpg of a map, and let you draw the protected zones, and showing on the map the triggered zone if any, by highlighting it
 
 
