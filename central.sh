@@ -33,6 +33,7 @@ SINGLE_led_status(){
 					esac
 				done
 	fi
+}
 
 RGB_led_status(){
 	if [[ "${gpio_status_led_enabled}" -eq 1 ]]
@@ -463,6 +464,7 @@ global_settings_load_up(){
 			silent_voice="${row[29]}"
 			video_capture_enabled="${row[30]}"
 			# led_type="${row[31]}"
+			led_type=1
 	done <<< $(sql_request_RO "select * from SETTINGS")
 	if	[[ "${led_type}" -ne 99 ]] # If the 'led_type' value is not 99, then their is a RGB LED connected and we have to initiate it.
 		then	RGB_led_status set_up_gpio
@@ -515,7 +517,7 @@ while true; do
 			rfid_reader 0
 			sms_sent=0
 			sql_request_RW "UPDATE ALARM_TRACKING SET CURRENT_STATUS = '${alarm_status}'"
-			led_status off
+			"${led_status}" off
 			
 			case "${override_mode}" in
 				6)	global_settings_load_up
@@ -572,7 +574,7 @@ while true; do
 			  do	sleep 1
 					rfid_reader 1
 					check_gpio_point_monitoring
-					led_status yellow "${alarm_set_on_delay}" & disown
+					"${led_status}" yellow "${alarm_set_on_delay}" & disown
 					debug "The rfid reader return value is : ${rfid_reader_result}" 
 					if	[[ "${rfid_reader_result}" -eq "1" ]]
 						then	arming_cancellation=1
@@ -581,14 +583,14 @@ while true; do
 								debug "Alarm arming canceled command received" 
 								event_log "alarm_unlocked.png" "Alarm arming canceled command received from RFID attributed to ${rfid_attribution}"
 								alarm_status=0
-								led_status green 2 & disown
+								"${led_status}" green 2 & disown
 								break
 					fi
 			done
 			if [[ $SECONDS -ge $alarm_arming_end && "${arming_cancellation}" -ne 1 ]]
 				then	sound_player message_alarm_armed
 						alarm_status=2
-						led_status yellow 999 & disown
+						"${led_status}" yellow 999 & disown
 						debug "We proceed to alarm status 2" 
 						event_log "alarm_monitoring.png" "Alarm is now activated and monitoring."
 			fi
@@ -599,7 +601,7 @@ while true; do
 		2)	sleep 0.6
 			debug "We are in the status 2" 
 			sql_request_RW "UPDATE ALARM_TRACKING SET CURRENT_STATUS = '${alarm_status}'"
-			led_status red 999 & disown
+			"${led_status}" red 999 & disown
 			check_gpio_point_monitoring
 			if [[ "${password_attempt}" -lt 3 ]]
 				then	rfid_reader 2
@@ -629,7 +631,7 @@ while true; do
 			debug "It is ${SECONDS} in the system. With the variable ${alarm_temporisation_delay}, we predict a temporisation end time at ${open_tempo_end}" 
 			piezo_alarm_sound alterna_4 notification
 			sound_player message_alarm_intrusion_detected
-			led_status purple 20 & disown
+			"${led_status}" purple 20 & disown
 			while [[ $SECONDS -lt $open_tempo_end ]]
 			  do	sleep 0.7
 					rfid_reader 3
@@ -645,7 +647,7 @@ while true; do
 								fi
 								if [[ "${rfid_reader_result}" -eq 1 ]] 
 									then	debug "A valid RFID car have been checked, we disarm the alarm."
-											led_status green 2 & disown
+											"${led_status}" green 2 & disown
 											alarm_status=0
 											break
 								fi
@@ -669,7 +671,7 @@ while true; do
 			send_sms intrusion
 			sms_sent=1
 			sound_player message_alarm_intrusion_confirmed
-			led_status red 120 & disown
+			"${led_status}" red 120 & disown
 			triggered_alarm=1
 			siren_end=$((SECONDS+"${alarm_siren_max_time}"))
 			piezo_alarm_sound alterna_120 intrusion
@@ -680,7 +682,7 @@ while true; do
 					rfid_reader 4
 					if [[ "${rfid_reader_result}" -eq 1 ]] 
 						then	debug "A valid RFID car have been checked, we disarm the alarm." 
-								led_status green 2
+								"${led_status}" green 2
 								break
 					fi
 			done
