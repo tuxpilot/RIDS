@@ -24,6 +24,7 @@
 import RPi.GPIO as GPIO
 import MFRC522
 import signal
+import time
 
 continue_reading = True
 
@@ -46,6 +47,9 @@ print "Press Ctrl-C to stop."
 
 # This loop keeps checking for chips. If one is near it will get the UID and authenticate
 while continue_reading:
+
+    #To ease some ressources, we add a small delay between each loop
+    time.sleep(0.5)
     
     # Scan for cards    
     (status,TagType) = MIFAREReader.MFRC522_Request(MIFAREReader.PICC_REQIDL)
