@@ -234,5 +234,6 @@ Incoming features :
 - Let you monitor the stream of the IP Cameras in real time, like in a security control center.
 - Let you make groups of access points inside 'zones', to be able to secure a specific perimeter while some others are not, letting you access the unprotected perimeters without triggering the whole alarm.
 - Let you upload a .Jpg of a map, and let you draw the protected zones, and showing on the map the triggered zone if any, by highlighting it
-
+- Let you add a wired 'panic button'
+- Let you add a wireless 'panic button' (when the wireless communication development will be over and tested)
 
