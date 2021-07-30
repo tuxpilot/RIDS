@@ -141,21 +141,13 @@ check_gpio_point_monitoring(){
 			gpio_open_flag="${row[6]}"
 			debug  "The GPIO ${monitoring_gpio_number} has a value of : ${monitoring_gpio_current_state} // when the acccess is closed, it must return a value of : ${monitoring_gpio_value_access_closed}, and it has a tempo trigger time of : ${tempo_trigger_alarm}" 
 			
-			if [[ "${monitoring_gpio_current_state}" -ne "${monitoring_gpio_value_access_closed}" && "${gpio_open_flag}" -eq 0 ]]
-				then	event_log "door_open.png" "The access ${monitoring_gpio_name} is detected as open"
-						case "${alarm_status}" in
-							0|1)	sql_request_RW "UPDATE GPIO SET monitoring_gpio_current_state = '${monitoring_gpio_current_state}', gpio_open_flag = '1'"
-									capture_video_cctv notification_door_opened
-									;;
-							
-							2|3|4)	sql_request_RW "UPDATE GPIO SET monitoring_gpio_current_state = '${monitoring_gpio_current_state}', gpio_open_flag = '1'"
-									capture_video_cctv alert_intrusion
-									;;	
-						esac
+			if [[ "${monitoring_gpio_current_state}" -eq "${monitoring_gpio_value_access_closed}" && "${gpio_open_flag}" -eq 1 ]]
+				then	event_log "door_closed.png" "The access ${monitoring_gpio_name} is detected as closed"
+						sql_request_RW "UPDATE GPIO SET monitoring_gpio_current_state = '${monitoring_gpio_current_state}', gpio_open_flag = '0'"
 			fi
 			
 			# If the currently checked access point is opened, and is a temporized access, and the alarm is not idle or being armed, then someone is entering a monitored area and has to authenticate quickly. Menwhile the alarm is waiting for authentication
-			if [[ "${monitoring_gpio_current_state}" -ne "${monitoring_gpio_value_access_closed}" && "${tempo_trigger_alarm}" -ne 0 && "${alarm_status}" -ne 0  && "${alarm_status}" -ne 1 ]]
+			if [[ "${monitoring_gpio_current_state}" -ne "${monitoring_gpio_value_access_closed}" && "${tempo_trigger_alarm}" -ne 0 && "${alarm_status}" -ne 0  && "${alarm_status}" -ne 1 && "${gpio_open_flag}" -ne 1 ]]
 				then	alarm_status=3
 						debug "The access point linked to the GPIO : ${monitoring_gpio_number}, named : ${monitoring_gpio_name}, is detected as open. We proceed to the alarm status 3"
 						event_log "alarm_state_3.png" "The access ${monitoring_gpio_name} triggered the temporisation of the alarm!!!"
@@ -163,15 +155,22 @@ check_gpio_point_monitoring(){
 			fi
 			
 			# If the currently checked access point is opened, and is NOT a temporized access, and the alarm is not idle or being armed, then an intrusion is confirmed 
-			if [[ "${monitoring_gpio_current_state}" -ne "${monitoring_gpio_value_access_closed}" && "${tempo_trigger_alarm}" -eq 0 && "${alarm_status}" -ne 0  && "${alarm_status}" -ne 1 ]]
+			if [[ "${monitoring_gpio_current_state}" -ne "${monitoring_gpio_value_access_closed}" && "${tempo_trigger_alarm}" -eq 0 && "${alarm_status}" -ne 0  && "${alarm_status}" -ne 1 && "${gpio_open_flag}" -ne 1 ]]
 				then	alarm_status=4
 						event_log "alarm_state_4.png" "The access ${monitoring_gpio_name} triggered the alarm!!!"
 						debug "The access point linked to the GPIO : ${monitoring_gpio_number}, named : ${monitoring_gpio_name}, is detected as open. We proceed to the alarm status 4" 
 			fi
 			
-			if [[ "${monitoring_gpio_current_state}" -eq "${monitoring_gpio_value_access_closed}" && "${gpio_open_flag}" -eq 1 ]]
-				then	event_log "door_closed.png" "The access ${monitoring_gpio_name} is detected as closed"
-						sql_request_RW "UPDATE GPIO SET monitoring_gpio_current_state = '${monitoring_gpio_current_state}', gpio_open_flag = '0'"
+			if [[ "${monitoring_gpio_current_state}" -ne "${monitoring_gpio_value_access_closed}" && "${gpio_open_flag}" -eq 0 ]]
+				then	event_log "door_open.png" "The access ${monitoring_gpio_name} is detected as open"
+						sql_request_RW "UPDATE GPIO SET monitoring_gpio_current_state = '${monitoring_gpio_current_state}', gpio_open_flag = '1'"
+						case "${alarm_status}" in
+							0|1)	capture_video_cctv notification_door_opened
+									;;
+							
+							2|3|4)	capture_video_cctv alert_intrusion
+									;;	
+						esac
 			fi
 	done <<< $(sql_request_RO "select * from GPIO")
 }
@@ -219,19 +218,19 @@ rfid_reader(){
 					then	if	[[ "${alarm_status}" -eq 5 ]]
 								then	debug "A new RFID card has been in contact with the RFID reader" 
 										sql_request_RW "INSERT INTO RFID (ID, rfid_card_ID, attribution_first_name, attribution_last_name, rfid_card_flag ) VALUES ( NULL, '${rfid_reader_capture}', 'TO_CUSTOMIZE', 'TO_CUSTOMIZE', 'active')"
-										basic_sound_player "${audio_signal_type}" "${audio_signal_type}" message_alarm_rfid_added
+										sound_player "${audio_signal_type}" message_alarm_rfid_added
 										event_log "added_rfid_card.png" "New RFID added with success."
 								
 								else	debug "Unknown RFID!: ${rfid_reader_capture}" 
 										event_log "wrong_rfid_card.png" "Unknown RFID detected !"
-										basic_sound_player "${audio_signal_type}" "${audio_signal_type}" alterna_2 notification
-										basic_sound_player "${audio_signal_type}" "${audio_signal_type}" message_alarm_unkown_rfid_card
+										sound_player "${audio_signal_type}" alterna_2 notification
+										sound_player "${audio_signal_type}" message_alarm_unkown_rfid_card
 										rfid_reader_result=2
 										echo "" > rfid_reader_capture.txt
 							fi
 							
 					else	rfid_reader_result=1
-							basic_sound_player "${audio_signal_type}" "${audio_signal_type}" alterna_1 notification
+							sound_player "${audio_signal_type}" alterna_1 notification
 							debug "function rfid not void : last_alarm_known_status = ${last_alarm_known_status} AND We found a known RFID : @${valid_rfid_request}@ "
 							valid_rfid_detected=1
 							password_attempt=0 # we reset the number of detected password attemps (password or RFID) since a valid one has been detected
@@ -245,8 +244,8 @@ rfid_reader(){
 							done <<< "${valid_rfid_request}"
 							if 	[[ "${rfid_attribution}" == *"TO_CUSTOMIZE"* ]]
 								then	debug "That RFID card is in the database but has no name attributed. We can't let an access to a card which has no attribution name for security reasons."
-										basic_sound_player "${audio_signal_type}" "${audio_signal_type}" alterna_2 notification
-										basic_sound_player "${audio_signal_type}" "${audio_signal_type}" message_alarm_rfid_has_no_name	
+										sound_player "${audio_signal_type}" alterna_2 notification
+										sound_player "${audio_signal_type}" message_alarm_rfid_has_no_name	
 										valid_rfid_detected=0
 										event_log "wrong_rfid_card.png" "The RFID card number ${rfid_card_ID} was detected and is part of the database, but has no user attributed to it. We can't let an access to a card which has no attribution name for security reasons"
 							fi
@@ -254,36 +253,36 @@ rfid_reader(){
 								then	debug "That RFID card ${rfid_card_ID} is detected, is in the database but the ID is referenced as stolen or lost!."
 										valid_rfid_detected=0
 										if 	[[ "${trigger_alarm_on_lost_or_stolen_card}" -eq 1 ]]
-											then	basic_sound_player "${audio_signal_type}" "${audio_signal_type}" alterna_2 intrusion
-													basic_sound_player "${audio_signal_type}" "${audio_signal_type}" message_alarm_rfid_revoked	
+											then	sound_player "${audio_signal_type}" alterna_2 intrusion
+													sound_player "${audio_signal_type}" message_alarm_rfid_revoked	
 													alarm_status=4
 													event_log "wrong_rfid_card.png" "The RFID card number ${rfid_card_ID} was detected and is referenced as lost or stolen! Alarm is triggered!"
-											else	basic_sound_player "${audio_signal_type}" "${audio_signal_type}" alterna_2 notification
-													basic_sound_player "${audio_signal_type}" "${audio_signal_type}" message_alarm_rfid_revoked	
+											else	sound_player "${audio_signal_type}" alterna_2 notification
+													sound_player "${audio_signal_type}" message_alarm_rfid_revoked	
 													event_log "wrong_rfid_card.png" "The RFID card number ${rfid_card_ID} was detected and is referenced as lost or stolen!"
 										fi
 										
 							fi
 							if [[ "${alarm_status}" -eq 5 ]]
 								then	debug "We noticed that the RFID card @${valid_rfid_request}@ attributed to ${rfid_card_ID} already exists" 
-										basic_sound_player "${audio_signal_type}" "${audio_signal_type}" message_alarm_rfid_already_exists	
+										sound_player "${audio_signal_type}" message_alarm_rfid_already_exists	
 							fi
 							if [[ "${alarm_status}" -eq 4 && "${valid_rfid_detected}" == 1 ]]
 								then	debug "We kill the piezo alarm" 
 										pkill -f piezo
 										debug "Sending the reset of the piezo gpio"
 										gpio -g write "${gpio_piezo_number}" 0
-										basic_sound_player "${audio_signal_type}" "${audio_signal_type}" message_alarm_password_success
+										sound_player "${audio_signal_type}" message_alarm_password_success
 										alarm_status=0
 										event_log "good_rfid_card.png" "Alarm disabled with the RFID card attributed to ${rfid_attribution}"
 							fi
 							if [[ "${alarm_status}" -eq 3 && "${valid_rfid_detected}" == 1 ]]
-								then	basic_sound_player "${audio_signal_type}" "${audio_signal_type}" message_alarm_password_success
+								then	sound_player "${audio_signal_type}" message_alarm_password_success
 										alarm_status=0
 										event_log "alarm_unlocked.png" "The RFID attributed to ${rfid_attribution} successfully unlocked the alarm"
 							fi
 							if [[ "${alarm_status}" -eq 2 && "${valid_rfid_detected}" == 1 ]]
-								then	basic_sound_player "${audio_signal_type}" "${audio_signal_type}" message_alarm_password_success
+								then	sound_player "${audio_signal_type}" message_alarm_password_success
 										alarm_status=0
 										event_log "alarm_unlocked.png" "The RFID attributed to ${rfid_attribution} successfully unlocked the alarm"
 							fi		
@@ -316,21 +315,21 @@ rfid_reader(){
 # 	This function is available only if in the settings, the value "silent_voice" is set to 0, which means we don't make it silent.
 #	Based on the setting value 'language' the voices are played in the selected language. If no language suits you, you are able to create it.
 #	The available choices for the "${audio_signal_type}" are : piezo_only | voice_only | piezo_voice
-basic_sound_player(){
-	if [[ "${silent_voice}" -eq 0 && "${1}" != *"alterna"* && "${audio_signal_type}" == *"voice"* ]]
+sound_player(){
+	if [[ "${silent_voice}" -eq 0 && "${2}" != *"alterna"* && "${audio_signal_type}" == *"voice"* ]]
 		then	if [[ "${alarm_status}" -ne 4 && "${alarm_status}" -ne 3 ]]
-					then	omxplayer --no-keys -o local "language/${language}/${1}.wav" Audio codec pcm_s16le channels 1 samplerate 16000 bitspersample 16 > /dev/null 2>&1
-							debug -e "on joue ${1}.wav"
-					else	omxplayer --no-keys -o local "language/${language}/${1}.wav" Audio codec pcm_s16le channels 1 samplerate 16000 bitspersample 16 > /dev/null 2>&1 &
-							debug -e "on joue ${1}.wav"
+					then	omxplayer --no-keys -o local "language/${language}/${2}.wav" Audio codec pcm_s16le channels 1 samplerate 16000 bitspersample 16 > /dev/null 2>&1
+							debug -e "We play ${2}.wav"
+					else	omxplayer --no-keys -o local "language/${language}/${2}.wav" Audio codec pcm_s16le channels 1 samplerate 16000 bitspersample 16 > /dev/null 2>&1 &
+							debug -e "We play ${2}.wav"
 				fi
 	fi
-	if [[ "${1}" == *"alterna"* && "${audio_signal_type}" != "voice_only" ]]
-		then	if [[ "${2}" == "notification" && "${silent_buzzer}" -eq 0 && "${gpio_piezo_number}" -ne 99 ]]
-					then	./piezo_alarm_sound.sh "${1}" "${gpio_piezo_number}" & disown
+	if [[ "${2}" == *"alterna"* && "${audio_signal_type}" != "voice_only" ]]
+		then	if [[ "${3}" == "notification" && "${silent_buzzer}" -eq 0 && "${gpio_piezo_number}" -ne 99 ]]
+					then	./piezo_alarm_sound.sh "${2}" "${gpio_piezo_number}" & disown
 				fi
-				if [[ "${2}" == "alert" && "${silent_alarm}" -eq 0 && "${gpio_piezo_number}" -ne 99 ]]  
-					then	./piezo_alarm_sound.sh "${1}" "${gpio_piezo_number}" & disown
+				if [[ "${3}" == "alert" && "${silent_alarm}" -eq 0 && "${gpio_piezo_number}" -ne 99 ]]  
+					then	./piezo_alarm_sound.sh "${2}" "${gpio_piezo_number}" & disown
 				fi
 	fi
 }
@@ -462,12 +461,12 @@ global_settings_load_up(){
 			silent_voice="${row[29]}"
 			video_capture_enabled="${row[30]}"
 			# led_status="${row[31]}"
-			led_status='RGB_led_status'
+			led_type='RGB_led_status'
 			# audio_signal_type="${row[32]}"
 			audio_signal_type='piezo_voice'
 			# sms_provider="${row[33]}"
 	done <<< $(sql_request_RO "select * from SETTINGS")
-	"${led_status}" set_up_gpio
+	led_status set_up_gpio
 	password_attempt=0
 	debug_path="${log_folder}/${debug_file}"
 	alarm_status="${default_alarm_status}"
@@ -475,6 +474,10 @@ global_settings_load_up(){
 		then	gpio -g mode "${gpio_piezo_number}" out
 				gpio -g write "${gpio_piezo_number}" 0
 	fi
+	while read -a row
+		do	gpio -g mode "${row[0]}" OUT
+			gpio -g write "${row[0]}" 1
+	done <<< $(sql_request_RO "select monitoring_gpio_number from GPIO")
 	echo "" > rfid_reader_capture.txt
 	sudo systemctl restart rfid_reader.service
 }
@@ -487,7 +490,7 @@ global_settings_load_up
 if [[ $(awk '{print $1}' /proc/uptime | awk -F '.' '{ print $1 }') -lt 120 && "${send_sms_on_reboot}" -eq 1 ]]
 	then	send_sms central_rebooted
 			sql_request_RW "UPDATE ALERT_TRACKING SET LAST_SMS_TIMESTAMP = `date +%s`"
-			basic_sound_player "${audio_signal_type}" message_alarm_central_rebooted
+			sound_player "${audio_signal_type}" message_alarm_central_rebooted
 			capture_video_cctv alert_intrusion
 fi
 
@@ -518,17 +521,17 @@ while true; do
 				6)	global_settings_load_up
 					event_log "alarm_restart_loading.png" "The alarm has finished reloading the global settings"
 					sql_request_RW "UPDATE SETTINGS SET central_mode_override = '0'"
-					basic_sound_player "${audio_signal_type}" piezo alterna_1 notification
+					sound_player "${audio_signal_type}" alterna_1 notification
 				;;
 				
-				5)	basic_sound_player "${audio_signal_type}" piezo alterna_1 notification
-					basic_sound_player "${audio_signal_type}" message message_alarm_management_mode_entered
+				5)	sound_player "${audio_signal_type}" alterna_1 notification
+					sound_player "${audio_signal_type}" message_alarm_management_mode_entered
 					alarm_status=5
 					event_log "alarm_management_mode_on.png" "The alarm has entered Management mode"
 				;;
 				
-				2)	basic_sound_player "${audio_signal_type}" piezo alterna_1 notification
-					basic_sound_player "${audio_signal_type}" message message_alarm_armed
+				2)	sound_player "${audio_signal_type}" alterna_1 notification
+					sound_player "${audio_signal_type}" message_alarm_armed
 					alarm_status=2
 					sql_request_RW "UPDATE SETTINGS SET central_mode_override = '0'"
 					event_log "alarm_monitoring.png" "Alarm was armed manually from the WebUI. The alarm is now activated and monitoring."
@@ -557,11 +560,11 @@ while true; do
 					if [[ "${monitoring_gpio_current_state}" -ne "${monitoring_gpio_value_access_closed}" ]]
 						then	debug "GPIO number ${monitoring_gpio_number} returns the access is still open, it should have a value of: ${monitoring_gpio_value_access_closed}, but instead we find a value of ${monitoring_gpio_current_state} " 
 								event_log "alarm_armed.png" "door_open.png" "Warning! The alarm is arming but the access ${monitoring_gpio_name} is still detected as opened"
-								basic_sound_player "${audio_signal_type}" alterna_3 notification
-								basic_sound_player "${audio_signal_type}" message_alarm_arming_still_open
+								sound_player "${audio_signal_type}" alterna_3 notification
+								sound_player "${audio_signal_type}" message_alarm_arming_still_open
 					fi
 			done <<< $(sql_request_RO "select * from ALERTS_RECIPIENTS")
-			basic_sound_player "${audio_signal_type}" message_alarm_arming
+			sound_player "${audio_signal_type}" message_alarm_arming
 			alarm_arming_end=$((SECONDS+"${alarm_set_on_delay}"))
 			debug "It is ${SECONDS} in the system. With the variable ${alarm_set_on_delay}, we predict arming temporisation end time in ${alarm_arming_end}" 
 			while [ $SECONDS -lt $alarm_arming_end ]
@@ -572,7 +575,7 @@ while true; do
 					debug "The rfid reader return value is : ${rfid_reader_result}" 
 					if	[[ "${rfid_reader_result}" -eq "1" ]]
 						then	arming_cancellation=1
-								basic_sound_player "${audio_signal_type}" message_alarm_arming_canceled
+								sound_player "${audio_signal_type}" message_alarm_arming_canceled
 								rfid_reader_result=0
 								debug "Alarm arming canceled command received" 
 								event_log "alarm_unlocked.png" "Alarm arming canceled command received from RFID attributed to ${rfid_attribution}"
@@ -582,7 +585,7 @@ while true; do
 					fi
 			done
 			if [[ $SECONDS -ge $alarm_arming_end && "${arming_cancellation}" -ne 1 ]]
-				then	basic_sound_player "${audio_signal_type}" message_alarm_armed
+				then	sound_player "${audio_signal_type}" message_alarm_armed
 						alarm_status=2
 						led_status yellow 999 & disown
 						debug "We proceed to alarm status 2" 
@@ -617,20 +620,19 @@ while true; do
 		3)	sleep 0.6
 			debug "We are in the status 3"
 			last_call_sent=0
-			check_gpio_point_monitoring
 			sql_request_RW "UPDATE ALARM_TRACKING SET CURRENT_STATUS = '${alarm_status}'"
 			debug "Door opening detected" 
 			open_tempo_end=$((SECONDS+"${alarm_temporisation_delay}"))
 			last_call_before_alarm=$((open_tempo_end-7))
 			debug "It is ${SECONDS} in the system. With the variable ${alarm_temporisation_delay}, we predict a temporisation end time at ${open_tempo_end}" 
-			basic_sound_player "${audio_signal_type}" alterna_4 notification
-			basic_sound_player "${audio_signal_type}" message_alarm_intrusion_detected
+			sound_player "${audio_signal_type}" alterna_4 notification
+			sound_player "${audio_signal_type}" message_alarm_intrusion_detected
 			led_status purple 20 & disown
 			while [[ $SECONDS -lt $open_tempo_end ]]
 			  do	sleep 0.7
 					rfid_reader 3
 					if [[ $SECONDS -gt "${last_call_before_alarm}" && "${last_call_sent}" -eq 0 ]]
-						then	basic_sound_player "${audio_signal_type}" alterna_4 notification
+						then	sound_player "${audio_signal_type}" alterna_4 notification
 								debug 'An acces point was detected as open, and still, no one has disabled the alarm, we are sending a last call sound if the legit user forgot to disable the alarm'
 					fi
 					if [[ "${password_attempt}" -lt 3 ]]
@@ -645,6 +647,7 @@ while true; do
 											alarm_status=0
 											break
 								fi
+								check_gpio_point_monitoring
 					fi
 					if [[ "${password_attempt}" -ge 3 ]]
 						then	send_sms intrusion
@@ -664,11 +667,11 @@ while true; do
 			event_log "alarm_siren_on.png" "Intrusion alarm was triggered!"
 			send_sms intrusion
 			sms_sent=1
-			basic_sound_player "${audio_signal_type}" message_alarm_intrusion_confirmed
+			sound_player "${audio_signal_type}" message_alarm_intrusion_confirmed
 			led_status red 120 & disown
 			triggered_alarm=1
 			siren_end=$((SECONDS+"${alarm_siren_max_time}"))
-			basic_sound_player "${audio_signal_type}" alterna_120 intrusion
+			sound_player "${audio_signal_type}" alterna_120 intrusion
 			sql_request_RW "UPDATE ALARM_TRACKING SET CURRENT_STATUS = '${alarm_status}'"
 			capture_video_cctv alert_intrusion
 			while [[ $SECONDS -lt $siren_end ]]
@@ -692,9 +695,9 @@ while true; do
 			debug "The central_mode_override read is : ${override_mode}"
 			if [[ "${override_mode}" -eq 0 ]]
 				then	debug "We leave the management mode"
-						basic_sound_player "${audio_signal_type}" alterna_1 notification
+						sound_player "${audio_signal_type}" alterna_1 notification
 						alarm_status=0
-						basic_sound_player "${audio_signal_type}" message_alarm_management_mode_left
+						sound_player "${audio_signal_type}" message_alarm_management_mode_left
 						sql_request_RW "UPDATE SETTINGS SET central_mode_override = '0'"
 						event_log "alarm_management_mode_off.png" "The alarm has left Management mode"
 			fi
