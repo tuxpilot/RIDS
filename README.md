@@ -238,3 +238,4 @@ Incoming features :
 - Let you add a wired 'panic button'
 - Let you add a wireless 'panic button' (when the wireless communication development will be over and tested)
 - Let you speak through the alarm, almost in real time, if you have loud speakers connected to the Rpi
+- Let you have an alert if you choose to be warned when a door is detected as opened for more than X seconds 
