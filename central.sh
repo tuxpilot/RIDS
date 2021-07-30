@@ -11,16 +11,14 @@
 
 # List of all the functions 
 
-SINGLE_led_status(){
-	if [[ "${gpio_status_led_enabled}" -eq 1 ]]
-		then	while :
-				do
-					case "${1}" in
+led_status(){
+	if [[ "${gpio_status_led_enabled}" -eq 1 && "${led_type}" == 'SINGLE_led_status' ]]
+		then	case "${1}" in
 					set_up_gpio)
 						gpio -g mode "${gpio_status_led_pwr}" OUT
 						gpio -g write "${gpio_status_led_pwr}" 0
-						break
 						;;
+						
 					*)
 						pkill -f SINGLE_led_status
 						gpio -g write "${gpio_status_led_pwr}" 1
@@ -28,18 +26,12 @@ SINGLE_led_status(){
 							then	sleep "${2}"
 						fi
 						gpio -g write "${gpio_status_led_green}" 0
-						break
 						;;
-					esac
-				done
+				esac
 	fi
-}
-
-RGB_led_status(){
-	if [[ "${gpio_status_led_enabled}" -eq 1 ]]
-		then	while :
-				do
-					case "${1}" in
+	
+	if [[ "${gpio_status_led_enabled}" -eq 1 && "${led_type}" == 'RGB_led_status' ]]
+		then	case "${1}" in
 					set_up_gpio)
 						gpio -g mode "${gpio_status_led_pwr}" OUT
 						gpio -g mode "${gpio_status_led_red}" OUT
@@ -49,8 +41,8 @@ RGB_led_status(){
 						gpio -g write "${gpio_status_led_red}" 0
 						gpio -g write "${gpio_status_led_blue}" 0
 						gpio -g write "${gpio_status_led_green}" 0
-						break
 						;;
+						
 					green)
 						pkill -f RGB_led_status
 						gpio -g write "${gpio_status_led_green}" 1
@@ -58,8 +50,8 @@ RGB_led_status(){
 							then	sleep "${2}"
 						fi
 						gpio -g write "${gpio_status_led_green}" 0
-						break
 						;;
+						
 					blue)
 						pkill -f RGB_led_status
 						gpio -g write "${gpio_status_led_blue}" 1
@@ -67,8 +59,8 @@ RGB_led_status(){
 							then	sleep "${2}"
 						fi
 						gpio -g write "${gpio_status_led_blue}" 0
-						break
 						;;
+						
 					red)
 						pkill -f RGB_led_status
 						gpio -g write "${gpio_status_led_red}" 1
@@ -76,8 +68,8 @@ RGB_led_status(){
 							then	sleep "${2}"
 						fi
 						gpio -g write "${gpio_status_led_red}" 0
-						break
 						;;
+						
 					purple)
 						pkill -f RGB_led_status
 						gpio -g write "${gpio_status_led_red}" 1
@@ -87,8 +79,8 @@ RGB_led_status(){
 						fi
 						gpio -g write "${gpio_status_led_red}" 0
 						gpio -g write "${gpio_status_led_blue}" 0
-						break
-						;;				
+						;;
+						
 					yellow)
 						pkill -f RGB_led_status
 						gpio -g write "${gpio_status_led_red}" 1
@@ -98,8 +90,8 @@ RGB_led_status(){
 						fi
 						gpio -g write "${gpio_status_led_red}" 0
 						gpio -g write "${gpio_status_led_green}" 0
-						break
 						;;
+						
 					cyan)
 						pkill -f RGB_led_status
 						gpio -g write "${gpio_status_led_green}" 1
@@ -109,8 +101,8 @@ RGB_led_status(){
 						fi
 						gpio -g write "${gpio_status_led_green}" 0
 						gpio -g write "${gpio_status_led_blue}" 0
-						break
 						;;
+						
 					white)
 						pkill -f RGB_led_status
 						gpio -g write "${gpio_status_led_red}" 1
@@ -122,18 +114,19 @@ RGB_led_status(){
 						gpio -g write "${gpio_status_led_red}" 0
 						gpio -g write "${gpio_status_led_blue}" 0
 						gpio -g write "${gpio_status_led_green}" 0
-						break
 						;;
+						
 					off)
 						pkill -f RGB_led_status
 						gpio -g write "${gpio_status_led_red}" 0
 						gpio -g write "${gpio_status_led_blue}" 0
 						gpio -g write "${gpio_status_led_green}" 0
-						break
 						;;
-				  esac
-				done
-		fi
+						
+				esac
+	fi
+	
+	
 }
 
 
@@ -194,8 +187,9 @@ send_sms(){
 			SEND_EMAIL="${row[4]}"
 			SMS_NUMBER="${row[5]}"
 			EMAIL_ADDRESS="${row[6]}"
+			recipient_name="${FIRST_NAME}_${LAST_NAME}"
 			# Based on the argument {1} retrieved from the function, we fetch the body of the sms and we send it to the recipient
-			sms_message_body=$(cat language/"${language}"/sms_messages.txt | grep "${1}" | awk -F '=' '{ print $2 }' )
+			sms_message_body=$(grep "${1}" language/"${language}"/sms_messages.txt | awk -F '=' '{ print $2 }' )
 			if [[ "${sms_sent}" -ne 1 && "${SEND_SMS}" -eq 1 ]]
 				then	php bin/OVH_API/php-ovh-dep/sms-sender.php "${SMS_NUMBER}" "${sms_message_body}" & disown >> /dev/null 2>&1						
 			fi
@@ -240,7 +234,7 @@ rfid_reader(){
 							basic_sound_player "${audio_signal_type}" "${audio_signal_type}" alterna_1 notification
 							debug "function rfid not void : last_alarm_known_status = ${last_alarm_known_status} AND We found a known RFID : @${valid_rfid_request}@ "
 							valid_rfid_detected=1
-							password_attempt=0
+							password_attempt=0 # we reset the number of detected password attemps (password or RFID) since a valid one has been detected
 							while read -a row
 								do	rfid_card_ID="${row[1]}"
 									attribution_first_name="${row[2]}"
@@ -318,34 +312,27 @@ rfid_reader(){
 }
 
 
-
-
 # Function made to play pre-recorded TTS voices, made to announce what the alarm is doing, and have a better user experience.
-# 	This function is available only if in the settings, the value "silent_voice" is set to 0.
+# 	This function is available only if in the settings, the value "silent_voice" is set to 0, which means we don't make it silent.
 #	Based on the setting value 'language' the voices are played in the selected language. If no language suits you, you are able to create it.
-basic_sound_player "${audio_signal_type}"(){
-	case "${audio_signal_type}" in
-		voice_only|piezo_voice) # voice_only | piezo+voice
-		if [[ "${silent_voice}" -eq 0 && "${2}" != *"alterna"* ]]
-			then	if [[ "${alarm_status}" -ne 4 && "${alarm_status}" -ne 3 ]]
-						then	omxplayer --no-keys -o local "language/${language}/${2}.wav" Audio codec pcm_s16le channels 1 samplerate 16000 bitspersample 16 > /dev/null 2>&1
-								debug -e "on joue ${2}.wav"
-						else	omxplayer --no-keys -o local "language/${language}/${2}.wav" Audio codec pcm_s16le channels 1 samplerate 16000 bitspersample 16 > /dev/null 2>&1 &
-								debug -e "on joue ${2}.wav"
-					fi
-		fi
-		;;
-	esac
-	
-	piez_only) # piezo_only
-	# set on and off the Piezo buzzer with an alternate rythme //This function is available only if in the settings, the value "silent_buzzer" is set to 0 and if the way of playing sound is set to 'piezo'
-	if [[ "${2}" == "notification" && "${silent_buzzer}" -eq 0 && "${gpio_piezo_number}" -ne 99 ]]
-		then	./piezo_alarm_sound.sh "${1}" "${gpio_piezo_number}" & disown
+#	The available choices for the "${audio_signal_type}" are : piezo_only | voice_only | piezo_voice
+basic_sound_player(){
+	if [[ "${silent_voice}" -eq 0 && "${1}" != *"alterna"* && "${audio_signal_type}" == *"voice"* ]]
+		then	if [[ "${alarm_status}" -ne 4 && "${alarm_status}" -ne 3 ]]
+					then	omxplayer --no-keys -o local "language/${language}/${1}.wav" Audio codec pcm_s16le channels 1 samplerate 16000 bitspersample 16 > /dev/null 2>&1
+							debug -e "on joue ${1}.wav"
+					else	omxplayer --no-keys -o local "language/${language}/${1}.wav" Audio codec pcm_s16le channels 1 samplerate 16000 bitspersample 16 > /dev/null 2>&1 &
+							debug -e "on joue ${1}.wav"
+				fi
 	fi
-	if [[ "${2}" == "alert" && "${silent_alarm}" -eq 0 && "${gpio_piezo_number}" -ne 99 ]]  
-		then	./piezo_alarm_sound.sh "${1}" "${gpio_piezo_number}" & disown
+	if [[ "${1}" == *"alterna"* && "${audio_signal_type}" != "voice_only" ]]
+		then	if [[ "${2}" == "notification" && "${silent_buzzer}" -eq 0 && "${gpio_piezo_number}" -ne 99 ]]
+					then	./piezo_alarm_sound.sh "${1}" "${gpio_piezo_number}" & disown
+				fi
+				if [[ "${2}" == "alert" && "${silent_alarm}" -eq 0 && "${gpio_piezo_number}" -ne 99 ]]  
+					then	./piezo_alarm_sound.sh "${1}" "${gpio_piezo_number}" & disown
+				fi
 	fi
-	;;
 }
 
 
@@ -356,7 +343,7 @@ basic_sound_player "${audio_signal_type}"(){
 
 # Function made to initiate necessary items and GPIOs related to the way of the users have to authenticate (RFID, external system link with a dry_contact, etc.)
 initiate_user_input(){
-	if [[ $(sql_request_RO "select user_input_method from SETTINGS") == "dry_contact" ]]
+	if [[ "${user_input_method}" == "dry_contact" ]]
 		then	gpio_user_input_method=$(sql_request_RO "select gpio_user_input_method from SETTINGS")
 				gpio_user_input_method_circuit_mode=$(sql_request_RO "select gpio_user_input_method_circuit_mode from SETTINGS")
 				declare -n ref="opened_access_gpio_${gpio_user_input_method}"
@@ -471,21 +458,16 @@ global_settings_load_up(){
 			video_capture_url="${row[25]}"
 			video_capture_on_alert_only="${row[26]}"
 			trigger_alarm_on_lost_or_stolen_card="${row[27]}"
-			central_mode_override="${row[28]}"
+			# central_mode_override="${row[28]}" # Useless recovery of this setting
 			silent_voice="${row[29]}"
 			video_capture_enabled="${row[30]}"
-			# led_type="${row[31]}"
-			led_type=1
+			# led_status="${row[31]}"
+			led_status='RGB_led_status'
 			# audio_signal_type="${row[32]}"
 			audio_signal_type='piezo_voice'
+			# sms_provider="${row[33]}"
 	done <<< $(sql_request_RO "select * from SETTINGS")
-	if	[[ "${led_type}" -ne 99 ]] # If the 'led_type' value is not 99, then their is a RGB LED connected and we have to initiate it.
-		then	RGB_led_status set_up_gpio
-				led_status='RGB_led_status'
-		else	SINGLE_led_status set_up_gpio
-				led_status='SINGLE_led_status'
-				
-	fi
+	"${led_status}" set_up_gpio
 	password_attempt=0
 	debug_path="${log_folder}/${debug_file}"
 	alarm_status="${default_alarm_status}"
@@ -502,11 +484,11 @@ global_settings_load_up
 
 # This is the point where we check if the system was rebooted less than 2 minutes ago and if a SMS was already sent or not.
 #	Since the Rpi is not supposed to be rebooted, and if the setting value 'send_sms_on_reboot' is set to 1 (enable), then we send a SMS because their was an unexpected event which might be sabotage
-if [[ $(awk '{print $1}' /proc/uptime | awk -F '.' '{ print $1 }') -lt 120 && sent_sms_after_reboot -ne 1 && "${send_sms_on_reboot}" -eq 1 ]]
-	then	sql_request_RW "UPDATE ALERT_TRACKING SET LAST_SMS_TIMESTAMP = `date +%s`"
-			send_sms central_rebooted
+if [[ $(awk '{print $1}' /proc/uptime | awk -F '.' '{ print $1 }') -lt 120 && "${send_sms_on_reboot}" -eq 1 ]]
+	then	send_sms central_rebooted
+			sql_request_RW "UPDATE ALERT_TRACKING SET LAST_SMS_TIMESTAMP = `date +%s`"
 			basic_sound_player "${audio_signal_type}" message_alarm_central_rebooted
-			# capture_image_cctv
+			capture_video_cctv alert_intrusion
 fi
 
 # Everytime the Rasberry restart or the service restart, we need to know it. So we add this as an event to the event log.
@@ -530,7 +512,7 @@ while true; do
 			rfid_reader 0
 			sms_sent=0
 			sql_request_RW "UPDATE ALARM_TRACKING SET CURRENT_STATUS = '${alarm_status}'"
-			"${led_status}" off
+			led_status off
 			
 			case "${override_mode}" in
 				6)	global_settings_load_up
@@ -555,7 +537,6 @@ while true; do
 			if	[[ "${rfid_reader_result}" -eq 1 ]]
 				then	alarm_status=1
 						debug "We proceed to status 1" 
-						event_log "alarm_armed.png" "Alarm was activated with the RFID attributed to ${rfid_attribution}"
 				else	sleep 1
 			fi
 			check_gpio_point_monitoring
@@ -574,7 +555,7 @@ while true; do
 					debug "We check the state of the GPIO number ${monitoring_gpio_number}" 
 					debug "The GPIO ${monitoring_gpio_number}, when access is closed, must have a value of : ${monitoring_gpio_value_access_closed}" 
 					if [[ "${monitoring_gpio_current_state}" -ne "${monitoring_gpio_value_access_closed}" ]]
-						then	debug "GPIO number ${monitoring_gpio_number} returns the access is still open, it should have a value of: ${monitoring_gpio_value_access_closed}, but instead we find a value of ${test_current_gpio} " 
+						then	debug "GPIO number ${monitoring_gpio_number} returns the access is still open, it should have a value of: ${monitoring_gpio_value_access_closed}, but instead we find a value of ${monitoring_gpio_current_state} " 
 								event_log "alarm_armed.png" "door_open.png" "Warning! The alarm is arming but the access ${monitoring_gpio_name} is still detected as opened"
 								basic_sound_player "${audio_signal_type}" alterna_3 notification
 								basic_sound_player "${audio_signal_type}" message_alarm_arming_still_open
@@ -587,7 +568,7 @@ while true; do
 			  do	sleep 1
 					rfid_reader 1
 					check_gpio_point_monitoring
-					"${led_status}" yellow "${alarm_set_on_delay}" & disown
+					led_status yellow "${alarm_set_on_delay}" & disown
 					debug "The rfid reader return value is : ${rfid_reader_result}" 
 					if	[[ "${rfid_reader_result}" -eq "1" ]]
 						then	arming_cancellation=1
@@ -596,14 +577,14 @@ while true; do
 								debug "Alarm arming canceled command received" 
 								event_log "alarm_unlocked.png" "Alarm arming canceled command received from RFID attributed to ${rfid_attribution}"
 								alarm_status=0
-								"${led_status}" green 2 & disown
+								led_status green 2 & disown
 								break
 					fi
 			done
 			if [[ $SECONDS -ge $alarm_arming_end && "${arming_cancellation}" -ne 1 ]]
 				then	basic_sound_player "${audio_signal_type}" message_alarm_armed
 						alarm_status=2
-						"${led_status}" yellow 999 & disown
+						led_status yellow 999 & disown
 						debug "We proceed to alarm status 2" 
 						event_log "alarm_monitoring.png" "Alarm is now activated and monitoring."
 			fi
@@ -614,7 +595,7 @@ while true; do
 		2)	sleep 0.6
 			debug "We are in the status 2" 
 			sql_request_RW "UPDATE ALARM_TRACKING SET CURRENT_STATUS = '${alarm_status}'"
-			"${led_status}" red 999 & disown
+			led_status red 999 & disown
 			check_gpio_point_monitoring
 			if [[ "${password_attempt}" -lt 3 ]]
 				then	rfid_reader 2
@@ -644,7 +625,7 @@ while true; do
 			debug "It is ${SECONDS} in the system. With the variable ${alarm_temporisation_delay}, we predict a temporisation end time at ${open_tempo_end}" 
 			basic_sound_player "${audio_signal_type}" alterna_4 notification
 			basic_sound_player "${audio_signal_type}" message_alarm_intrusion_detected
-			"${led_status}" purple 20 & disown
+			led_status purple 20 & disown
 			while [[ $SECONDS -lt $open_tempo_end ]]
 			  do	sleep 0.7
 					rfid_reader 3
@@ -660,7 +641,7 @@ while true; do
 								fi
 								if [[ "${rfid_reader_result}" -eq 1 ]] 
 									then	debug "A valid RFID car have been checked, we disarm the alarm."
-											"${led_status}" green 2 & disown
+											led_status green 2 & disown
 											alarm_status=0
 											break
 								fi
@@ -684,7 +665,7 @@ while true; do
 			send_sms intrusion
 			sms_sent=1
 			basic_sound_player "${audio_signal_type}" message_alarm_intrusion_confirmed
-			"${led_status}" red 120 & disown
+			led_status red 120 & disown
 			triggered_alarm=1
 			siren_end=$((SECONDS+"${alarm_siren_max_time}"))
 			basic_sound_player "${audio_signal_type}" alterna_120 intrusion
@@ -695,7 +676,7 @@ while true; do
 					rfid_reader 4
 					if [[ "${rfid_reader_result}" -eq 1 ]] 
 						then	debug "A valid RFID car have been checked, we disarm the alarm." 
-								"${led_status}" green 2
+								led_status green 2
 								break
 					fi
 			done
