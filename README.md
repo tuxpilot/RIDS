@@ -94,7 +94,7 @@ Recommended :
 
 
 
-For the moment, the installation is fully manual, the installer will be automatic in the coming mounths
+For the moment, the installation is fully manual, the installer will be automatic in the coming months
 Logical installation : 
 1) Install any of theses GNU/Linux Distro on your Raspberry (Ubuntu, Ubuntu Server, Raspbian, etc. )
 2) Log in via a SSH client to your Raspberry
