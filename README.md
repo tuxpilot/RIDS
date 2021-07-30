@@ -218,6 +218,7 @@ You need to enter the following informations in order to let the alarm manage it
 
 
 Incoming features :
+- Watchdog for making sure the services and the scripts are always running
 - Automatic deletion of the media clips based on a retention number in days
 - Automatic installation based on a script from the CLI
 - Adding an Access point from the WEbui and customize it
