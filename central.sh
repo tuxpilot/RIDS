@@ -11,6 +11,8 @@
 
 # List of all the functions 
 
+pgrep mysql || sudo systemctl restart mysql
+
 led_status(){
 	if [[ "${gpio_status_led_enabled}" -eq 1 && "${led_type}" == 'SINGLE_led_status' ]]
 		then	case "${1}" in
@@ -195,23 +197,25 @@ check_gpio_point_monitoring(){
 # Function made to send SMS based on a list of recipients in the database, and the SMS API from OVH (paid functionnality, transiting through the web).
 send_sms(){
 	# We retrieve the datas for every recipient for who the setting 'SEND_SMS' is set to 1, and we send a SMS which content is based on the event which triggered the function.
-	while read -a row
-		do	FIRST_NAME="${row[1]}"
-			LAST_NAME="${row[2]}"
-			SEND_SMS="${row[3]}"
-			SEND_EMAIL="${row[4]}"
-			SMS_NUMBER="${row[5]}"
-			EMAIL_ADDRESS="${row[6]}"
-			recipient_name="${FIRST_NAME}_${LAST_NAME}"
-			# Based on the argument {1} retrieved from the function, we fetch the body of the sms and we send it to the recipient
-			sms_message_body=$(grep "${1}" language/"${language}"/sms_messages.txt | awk -F '=' '{ print $2 }' )
-			if [[ "${sms_sent}" -ne 1 && "${SEND_SMS}" -eq 1 ]]
-				then	php bin/OVH_API/php-ovh-dep/sms-sender.php "${SMS_NUMBER}" "${sms_message_body}" & disown >> /dev/null 2>&1						
-			fi
-			# We add to the database the information regarding the fact that we just sent a SMS
-			sql_request_RW "UPDATE ALERT_TRACKING SET LAST_SMS_TIMESTAMP = `date +%s`"
-			debug "date +%Y_%m_%d__@__%H:%M_sent-to_${recipient_name}_AND_MESSAGE_${sms_message_body}"
-	done <<< $(sql_request_RO "select * from ALERTS_RECIPIENTS")
+	if [[ "${sms_sent}" -ne 1 ]]
+		then	while read -a row
+					do	FIRST_NAME="${row[1]}"
+						LAST_NAME="${row[2]}"
+						SEND_SMS="${row[3]}"
+						SEND_EMAIL="${row[4]}"
+						SMS_NUMBER="${row[5]}"
+						EMAIL_ADDRESS="${row[6]}"
+						recipient_name="${FIRST_NAME}_${LAST_NAME}"
+						# Based on the argument {1} retrieved from the function, we fetch the body of the sms and we send it to the recipient
+						sms_message_body=$(grep "${1}" "language/${language}/sms_messages.txt" | awk -F '=' '{ print $2 }' )
+						if [[ "${sms_sent}" -ne 1 && "${SEND_SMS}" -eq 1 ]]
+							then	php bin/OVH_API/php-ovh-dep/sms-sender.php "${SMS_NUMBER}" "${sms_message_body}" & disown >> /dev/null 2>&1						
+						fi
+						# We add to the database the information regarding the fact that we just sent a SMS
+						sql_request_RW "UPDATE ALERT_TRACKING SET LAST_SMS_TIMESTAMP = `date +%s`"
+						echo "date +%Y_%m_%d__@__%H:%M_sent-to_${recipient_name}_AND_MESSAGE_${sms_message_body}"
+				done <<< $(sql_request_RO "select * from ALERTS_RECIPIENTS")
+	fi
 }
 
 
