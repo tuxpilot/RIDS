@@ -142,7 +142,7 @@ check_gpio_point_monitoring(){
 			tempo_trigger_alarm="${row[5]}"
 			gpio_open_flag="${row[6]}"
 			mandatory_closed_access_on_arming="${row[7]}"
-			debug  "The GPIO ${monitoring_gpio_number} has a value of : ${monitoring_gpio_current_state} // when the acccess is closed, it must return a value of : ${monitoring_gpio_value_access_closed}, and it has a tempo trigger time of : ${tempo_trigger_alarm}" 
+			debug  "The GPIO ${monitoring_gpio_number} has a value of : ${monitoring_gpio_current_state} // when the access is closed, it must return a value of : ${monitoring_gpio_value_access_closed}, and it has a tempo trigger time of : ${tempo_trigger_alarm}" 
 			
 			if [[ "${monitoring_gpio_current_state}" -eq "${monitoring_gpio_value_access_closed}" && "${gpio_open_flag}" -eq 1 ]]
 				then	event_log "door_closed.png" "The access ${monitoring_gpio_name} is detected as closed"
@@ -150,7 +150,7 @@ check_gpio_point_monitoring(){
 			fi
 			
 			# If the currently checked access point is opened, and is a temporized access, and the alarm is not idle or being armed, then someone is entering a monitored area and has to authenticate quickly. Menwhile the alarm is waiting for authentication
-			if [[ "${monitoring_gpio_current_state}" -ne "${monitoring_gpio_value_access_closed}" && "${tempo_trigger_alarm}" -ne 0 && "${alarm_status}" -ne 0  && "${alarm_status}" -ne 1 && "${gpio_open_flag}" -ne 1 ]]
+			if [[ "${monitoring_gpio_current_state}" -ne "${monitoring_gpio_value_access_closed}" && "${tempo_trigger_alarm}" -ne 0 && ! "${rfid_card_flag}" =~ ('0'|'1') && "${gpio_open_flag}" -ne 1 ]]
 				then	alarm_status=3
 						debug "The access point linked to the GPIO : ${monitoring_gpio_number}, named : ${monitoring_gpio_name}, is detected as open. We proceed to the alarm status 3"
 						event_log "alarm_state_3.png" "The access ${monitoring_gpio_name} triggered the temporisation of the alarm!!!"
@@ -158,7 +158,7 @@ check_gpio_point_monitoring(){
 			fi
 			
 			# If the currently checked access point is opened, and is NOT a temporized access, and the alarm is not idle or being armed, then an intrusion is confirmed 
-			if [[ "${monitoring_gpio_current_state}" -ne "${monitoring_gpio_value_access_closed}" && "${tempo_trigger_alarm}" -eq 0 && "${alarm_status}" -ne 0  && "${alarm_status}" -ne 1 && "${gpio_open_flag}" -ne 1 ]]
+			if [[ "${monitoring_gpio_current_state}" -ne "${monitoring_gpio_value_access_closed}" && "${tempo_trigger_alarm}" -eq 0 && ! "${rfid_card_flag}" =~ ('0'|'1') && "${gpio_open_flag}" -ne 1 ]]
 				then	alarm_status=4
 						event_log "alarm_state_4.png" "The access ${monitoring_gpio_name} triggered the alarm!!!"
 						debug "The access point linked to the GPIO : ${monitoring_gpio_number}, named : ${monitoring_gpio_name}, is detected as open. We proceed to the alarm status 4" 
@@ -269,7 +269,7 @@ rfid_reader(){
 										valid_rfid_detected=0
 										event_log "wrong_rfid_card.png" "The RFID card number ${rfid_card_ID} was detected and is part of the database, but has no user attributed to it. We can't let an access to a card which has no attribution name for security reasons"
 							fi
-							if 	[[ "${rfid_card_flag}" == *"lost"* || "${rfid_card_flag}" == *"stolen"* ]]
+							if 	[[ "${rfid_card_flag}" =~ ("lost"|"stolen") ]]
 								then	debug "That RFID card ${rfid_card_ID} is detected, is in the database but the ID is referenced as stolen or lost!."
 										valid_rfid_detected=0
 										if 	[[ "${trigger_alarm_on_lost_or_stolen_card}" -eq 1 ]]
@@ -296,16 +296,11 @@ rfid_reader(){
 										alarm_status=0
 										event_log "good_rfid_card.png" "Alarm disabled with the RFID card attributed to ${rfid_attribution}"
 							fi
-							if [[ "${alarm_status}" -eq 3 && "${valid_rfid_detected}" == 1 ]]
+							if [[ "${alarm_status}" =~ ^('2'|'3')$ && "${valid_rfid_detected}" == 1 ]]
 								then	sound_player "${audio_signal_type}" message_alarm_password_success
 										alarm_status=0
 										event_log "alarm_unlocked.png" "The RFID attributed to ${rfid_attribution} successfully unlocked the alarm"
 							fi
-							if [[ "${alarm_status}" -eq 2 && "${valid_rfid_detected}" == 1 ]]
-								then	sound_player "${audio_signal_type}" message_alarm_password_success
-										alarm_status=0
-										event_log "alarm_unlocked.png" "The RFID attributed to ${rfid_attribution} successfully unlocked the alarm"
-							fi		
 							if [[ "${alarm_status}" -eq 1 && "${valid_rfid_detected}" == 1 ]]
 								then	alarm_status=0
 										event_log "alarm_unlocked.png" "The RFID attributed to ${rfid_attribution} successfully unlocked the alarm"
@@ -337,11 +332,11 @@ rfid_reader(){
 #	The available choices for the "${audio_signal_type}" are : piezo_only | voice_only | piezo_voice
 sound_player(){
 	if [[ "${silent_voice}" -eq 0 && "${2}" != *"alterna"* && "${audio_signal_type}" == *"voice"* ]]
-		then	if [[ "${alarm_status}" -ne 4 && "${alarm_status}" -ne 3 ]]
+		then	if [[ ! "${alarm_status}" =~ ^('3'|'4')$ ]]
 					then	omxplayer --no-keys -o local "language/${language}/${2}.wav" Audio codec pcm_s16le channels 1 samplerate 16000 bitspersample 16 > /dev/null 2>&1
-							debug -e "We play ${2}.wav"
+							debug "We play ${2}.wav"
 					else	omxplayer --no-keys -o local "language/${language}/${2}.wav" Audio codec pcm_s16le channels 1 samplerate 16000 bitspersample 16 > /dev/null 2>&1 &
-							debug -e "We play ${2}.wav"
+							debug "We play ${2}.wav"
 				fi
 	fi
 	if [[ "${2}" == *"alterna"* && "${audio_signal_type}" != "voice_only" ]]
@@ -611,7 +606,7 @@ while true; do
 			sql_request_RW "UPDATE ALARM_TRACKING SET CURRENT_STATUS = '${alarm_status}'"
 			led_status red 999 & disown
 			check_gpio_point_monitoring
-			if [[ "${password_attempt}" -lt 3 ]]
+			if [[ "${password_attempt}" -lt 3 && ! "${alarm_status}" =~ ^('3'|'4')$ ]]
 				then	rfid_reader 2
 						if [[ "${rfid_reader_result}" -eq 2 ]]
 							then	password_attempt=$(expr "${password_attempt}" + 1)
@@ -620,7 +615,7 @@ while true; do
 						fi
 						debug "We saw ${password_attempt} unsuccessful attempts of trying to unlock the alarm"
 			fi
-			if [[ "${password_attempt}" -ge 3 ]]
+			if [[ "${password_attempt}" -ge 3 && ! "${alarm_status}" =~ ^('3'|'4')$ ]]
 				then	alarm_status=4
 						password_attempt=0
 			fi
@@ -629,15 +624,14 @@ while true; do
 		
 	# This is the alarm state where the alarm detected the opening of a temporised access point (ie :the front door), and is waiting for the user to authenticate as a legit human, getting inside the protected perimeter.
 		3)	sleep 0.6
-			debug "We are in the status 3"
-			last_call_sent=0
-			sql_request_RW "UPDATE ALARM_TRACKING SET CURRENT_STATUS = '${alarm_status}'"
-			debug "Door opening detected" 
-			open_tempo_end=$((SECONDS+"${alarm_temporisation_delay}"))
-			last_call_before_alarm=$((open_tempo_end-7))
-			debug "It is ${SECONDS} in the system. With the variable ${alarm_temporisation_delay}, we predict a temporisation end time at ${open_tempo_end}" 
+			debug "We are in the status 3  && Door opening detected !!!!"
 			sound_player "${audio_signal_type}" alterna_4 notification
 			sound_player "${audio_signal_type}" message_alarm_intrusion_detected
+			open_tempo_end=$((SECONDS+"${alarm_temporisation_delay}"))
+			last_call_sent=0
+			sql_request_RW "UPDATE ALARM_TRACKING SET CURRENT_STATUS = '${alarm_status}'"
+			last_call_before_alarm=$((open_tempo_end-7))
+			debug "It is ${SECONDS} in the system. With the variable ${alarm_temporisation_delay}, we predict a temporisation end time at ${open_tempo_end}" 
 			led_status purple 20 & disown
 			while [[ $SECONDS -lt $open_tempo_end ]]
 			  do	sleep 0.7
