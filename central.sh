@@ -139,6 +139,7 @@ check_gpio_point_monitoring(){
 			monitoring_gpio_current_state=$(gpio -g read "${monitoring_gpio_number}")
 			tempo_trigger_alarm="${row[5]}"
 			gpio_open_flag="${row[6]}"
+			mandatory_closed_access_on_arming="${row[7]}"
 			debug  "The GPIO ${monitoring_gpio_number} has a value of : ${monitoring_gpio_current_state} // when the acccess is closed, it must return a value of : ${monitoring_gpio_value_access_closed}, and it has a tempo trigger time of : ${tempo_trigger_alarm}" 
 			
 			if [[ "${monitoring_gpio_current_state}" -eq "${monitoring_gpio_value_access_closed}" && "${gpio_open_flag}" -eq 1 ]]
@@ -172,6 +173,21 @@ check_gpio_point_monitoring(){
 									;;	
 						esac
 			fi
+			
+			if [[ "${monitoring_gpio_current_state}" -ne "${monitoring_gpio_value_access_closed}" && "${1}" == "pre_arming_check" ]]
+						then	if [[ "${mandatory_closed_access_on_arming}" -eq 1 ]]
+									then	debug "Mandatory closed access point for arming is found opened! GPIO number ${monitoring_gpio_number} returns the access is still open, it should have a value of: ${monitoring_gpio_value_access_closed}, but instead we find a value of ${monitoring_gpio_current_state} " 
+											sound_player "${audio_signal_type}" alterna_3 notification
+											sound_player "${audio_signal_type}" message_alarm_auto_cancel_arming
+											alarm_status=0
+											pre_arming_check_result="NOK"
+											event_log "door_still_opened.png" "Warning! The alarm is arming but the access ${monitoring_gpio_name} is still detected as opened"
+									else	debug "GPIO number ${monitoring_gpio_number} returns the access is still open, it should have a value of: ${monitoring_gpio_value_access_closed}, but instead we find a value of ${monitoring_gpio_current_state} " 
+											event_log "door_still_opened.png" "Warning! The alarm is arming but the access ${monitoring_gpio_name} is still detected as opened"
+											sound_player "${audio_signal_type}" alterna_3 notification
+											sound_player "${audio_signal_type}" message_alarm_arming_still_open
+								fi
+					fi
 	done <<< $(sql_request_RO "select * from GPIO")
 }
 
@@ -514,6 +530,7 @@ while true; do
 			sql_request_RW "UPDATE ALARM_TRACKING SET CURRENT_STATUS = '${alarm_status}'"
 			rfid_reader 0
 			sms_sent=0
+			pre_arming_check_result="OK"
 			sql_request_RW "UPDATE ALARM_TRACKING SET CURRENT_STATUS = '${alarm_status}'"
 			led_status off
 			
@@ -549,49 +566,39 @@ while true; do
 		1)	sleep 0.7
 			debug "We are in the status 1"
 			sql_request_RW "UPDATE ALARM_TRACKING SET CURRENT_STATUS = '${alarm_status}'"
-			check_gpio_point_monitoring
-			while read -a row
-				do	monitoring_gpio_number="${row[1]}"
-					monitoring_gpio_value_access_closed="${row[2]}"
-					monitoring_gpio_name="${row[3]}"
-					monitoring_gpio_current_state=$(gpio -g read "${monitoring_gpio_number}")
-					debug "We check the state of the GPIO number ${monitoring_gpio_number}" 
-					debug "The GPIO ${monitoring_gpio_number}, when access is closed, must have a value of : ${monitoring_gpio_value_access_closed}" 
-					if [[ "${monitoring_gpio_current_state}" -ne "${monitoring_gpio_value_access_closed}" ]]
-						then	debug "GPIO number ${monitoring_gpio_number} returns the access is still open, it should have a value of: ${monitoring_gpio_value_access_closed}, but instead we find a value of ${monitoring_gpio_current_state} " 
-								event_log "alarm_armed.png" "door_open.png" "Warning! The alarm is arming but the access ${monitoring_gpio_name} is still detected as opened"
-								sound_player "${audio_signal_type}" alterna_3 notification
-								sound_player "${audio_signal_type}" message_alarm_arming_still_open
-					fi
-			done <<< $(sql_request_RO "select * from ALERTS_RECIPIENTS")
-			sound_player "${audio_signal_type}" message_alarm_arming
-			alarm_arming_end=$((SECONDS+"${alarm_set_on_delay}"))
-			debug "It is ${SECONDS} in the system. With the variable ${alarm_set_on_delay}, we predict arming temporisation end time in ${alarm_arming_end}" 
-			while [ $SECONDS -lt $alarm_arming_end ]
-			  do	sleep 1
-					rfid_reader 1
-					check_gpio_point_monitoring
-					led_status yellow "${alarm_set_on_delay}" & disown
-					debug "The rfid reader return value is : ${rfid_reader_result}" 
-					if	[[ "${rfid_reader_result}" -eq "1" ]]
-						then	arming_cancellation=1
-								sound_player "${audio_signal_type}" message_alarm_arming_canceled
-								rfid_reader_result=0
-								debug "Alarm arming canceled command received" 
-								event_log "alarm_unlocked.png" "Alarm arming canceled command received from RFID attributed to ${rfid_attribution}"
-								alarm_status=0
-								led_status green 2 & disown
-								break
-					fi
-			done
-			if [[ $SECONDS -ge $alarm_arming_end && "${arming_cancellation}" -ne 1 ]]
-				then	sound_player "${audio_signal_type}" message_alarm_armed
-						alarm_status=2
-						led_status yellow 999 & disown
-						debug "We proceed to alarm status 2" 
-						event_log "alarm_monitoring.png" "Alarm is now activated and monitoring."
+			check_gpio_point_monitoring pre_arming_check
+			if	[[ "${pre_arming_check_result}" == "OK" ]]
+				then	sound_player "${audio_signal_type}" message_alarm_arming
+						alarm_arming_end=$((SECONDS+"${alarm_set_on_delay}"))
+						debug "It is ${SECONDS} in the system. With the variable ${alarm_set_on_delay}, we predict arming temporisation end time in ${alarm_arming_end}" 
+						while [ $SECONDS -lt $alarm_arming_end ]
+						  do	sleep 1
+								rfid_reader 1
+								check_gpio_point_monitoring
+								led_status yellow "${alarm_set_on_delay}" & disown
+								debug "The rfid reader return value is : ${rfid_reader_result}" 
+								if	[[ "${rfid_reader_result}" -eq "1" ]]
+									then	arming_cancellation=1
+											sound_player "${audio_signal_type}" message_alarm_arming_canceled
+											rfid_reader_result=0
+											debug "Alarm arming canceled command received" 
+											event_log "alarm_unlocked.png" "Alarm arming canceled command received from RFID attributed to ${rfid_attribution}"
+											alarm_status=0
+											led_status green 2 & disown
+											break
+								fi
+						done
+						if [[ $SECONDS -ge $alarm_arming_end && "${arming_cancellation}" -ne 1 ]]
+							then	sound_player "${audio_signal_type}" message_alarm_armed
+									alarm_status=2
+									led_status yellow 999 & disown
+									debug "We proceed to alarm status 2" 
+									event_log "alarm_monitoring.png" "Alarm is now activated and monitoring."
+						fi
+						rfid_reader_result=0
+				else	event_log "alarm_unlocked.png" "Alarm arming canceled command received because an access point configured as mandatory closed for arming is still detected as opened"
+						alarm_status=0
 			fi
-			rfid_reader_result=0
 		;;
 		
 	# This is the alarm state where the alarm is active and monitoring all the active access points.
