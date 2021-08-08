@@ -150,7 +150,7 @@ check_gpio_point_monitoring(){
 			fi
 			
 			# If the currently checked access point is opened, and is a temporized access, and the alarm is not idle or being armed, then someone is entering a monitored area and has to authenticate quickly. Menwhile the alarm is waiting for authentication
-			if [[ "${monitoring_gpio_current_state}" -ne "${monitoring_gpio_value_access_closed}" && "${tempo_trigger_alarm}" -ne 0 && ! "${rfid_card_flag}" =~ ('0'|'1') && "${gpio_open_flag}" -ne 1 ]]
+			if [[ "${monitoring_gpio_current_state}" -ne "${monitoring_gpio_value_access_closed}" && "${tempo_trigger_alarm}" -ne 0 && ! "${alarm_status}" =~ ('0'|'1') && "${gpio_open_flag}" -ne 1 ]]
 				then	alarm_status=3
 						debug "The access point linked to the GPIO : ${monitoring_gpio_number}, named : ${monitoring_gpio_name}, is detected as open. We proceed to the alarm status 3"
 						event_log "alarm_state_3.png" "The access ${monitoring_gpio_name} triggered the temporisation of the alarm!!!"
@@ -158,7 +158,7 @@ check_gpio_point_monitoring(){
 			fi
 			
 			# If the currently checked access point is opened, and is NOT a temporized access, and the alarm is not idle or being armed, then an intrusion is confirmed 
-			if [[ "${monitoring_gpio_current_state}" -ne "${monitoring_gpio_value_access_closed}" && "${tempo_trigger_alarm}" -eq 0 && ! "${rfid_card_flag}" =~ ('0'|'1') && "${gpio_open_flag}" -ne 1 ]]
+			if [[ "${monitoring_gpio_current_state}" -ne "${monitoring_gpio_value_access_closed}" && "${tempo_trigger_alarm}" -eq 0 && ! "${alarm_status}" =~ ('0'|'1') && "${gpio_open_flag}" -ne 1 ]]
 				then	alarm_status=4
 						event_log "alarm_state_4.png" "The access ${monitoring_gpio_name} triggered the alarm!!!"
 						debug "The access point linked to the GPIO : ${monitoring_gpio_number}, named : ${monitoring_gpio_name}, is detected as open. We proceed to the alarm status 4" 
@@ -714,5 +714,6 @@ while true; do
 	
 
 done
+
 
 
