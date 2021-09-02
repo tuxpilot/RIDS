@@ -191,7 +191,7 @@ You need to enter the following informations in order to let the alarm manage it
 - ADD a new access point with the assistance of the Webui (to be helped with the state of the value in open/close state, etc.)
 - Manage the SMS and mail sending alarm information from the Webui
 - Arm/disable the alarm based on user authentication from a USB Keyboard
-- Wireless communication between the access point monitoring devices (RF :433Mhz)
+- Wireless communication between the access point monitoring devices (RF :433Mhz)  || Edit 02/09/2021 : Zigbee is under test for being the chosen technology for the wireless communicatoin between the access point and the central.
 - Let you choose another SMS sender than OVH (Twilio, RaspiSMS, etc.)
 - Let you choose to send SMS from a dedicated device (managed automaticaly with minicom)
 - Let you set multiple IP cameras to the system
