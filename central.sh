@@ -142,13 +142,16 @@ check_gpio_point_monitoring(){
 			monitoring_gpio_name=$(echo $gpio_array["${current_access_points_to_monitor}"] | awk -F ' ' '{ print $4 }')
 			monitoring_gpio_current_state=$(gpio -g read "${monitoring_gpio_number}")
 			tempo_trigger_alarm=$(echo $gpio_array["${current_access_points_to_monitor}"] | awk -F ' ' '{ print $6 }')
-			gpio_open_flag=$(echo $gpio_array["${current_access_points_to_monitor}"] | awk -F ' ' '{ print $7 }')
+			# gpio_open_flag=$(echo $gpio_array["${current_access_points_to_monitor}"] | awk -F ' ' '{ print $7 }')
+			gpio_open_flag="${gpio_flag[$monitoring_gpio_number]}"
+			debug "The FLAG for the gpio ${monitoring_gpio_number} is ${gpio_open_flag}, it is read from the array with the following datas : ${gpio_flag[$monitoring_gpio_number]}"
 			mandatory_closed_access_on_arming=$(echo gpio_array["${current_access_points_to_monitor}"] | awk -F ' ' '{ print $8 }')
 			debug  "The GPIO ${monitoring_gpio_number} has a value of : ${monitoring_gpio_current_state} // when the access is closed, it must return a value of : ${monitoring_gpio_value_access_closed}, and it has a tempo trigger time of : ${tempo_trigger_alarm}" 
 			
 			if [[ "${monitoring_gpio_current_state}" -eq "${monitoring_gpio_value_access_closed}" && "${gpio_open_flag}" -eq 1 ]]
 				then	event_log "door_closed.png" "The access ${monitoring_gpio_name} is detected as closed"
-						sql_request_RW "UPDATE GPIO SET monitoring_gpio_current_state = '${monitoring_gpio_current_state}', gpio_open_flag = '0'" & disown >> /dev/null 2>&1
+						# sql_request_RW "UPDATE GPIO SET monitoring_gpio_current_state = '${monitoring_gpio_current_state}', gpio_open_flag = '0'" & disown >> /dev/null 2>&1
+						gpio_flag[$monitoring_gpio_number]="0"
 			fi
 			
 			# If the currently checked access point is opened, and is a temporized access, and the alarm is not idle or being armed, then someone is entering a monitored area and has to authenticate quickly. Menwhile the alarm is waiting for authentication
@@ -168,12 +171,15 @@ check_gpio_point_monitoring(){
 			
 			if [[ "${monitoring_gpio_current_state}" -ne "${monitoring_gpio_value_access_closed}" && "${gpio_open_flag}" -eq 0 ]]
 				then	event_log "door_open.png" "The access ${monitoring_gpio_name} is detected as open"
-						sql_request_RW "UPDATE GPIO SET monitoring_gpio_current_state = '${monitoring_gpio_current_state}', gpio_open_flag = '1'" & disown >> /dev/null 2>&1
+						# sql_request_RW "UPDATE GPIO SET monitoring_gpio_current_state = '${monitoring_gpio_current_state}', gpio_open_flag = '1'" & disown >> /dev/null 2>&1
+						gpio_flag[$monitoring_gpio_number]="0"
 						case "${alarm_status}" in
 							0|1)	capture_video_cctv notification_door_opened
+									gpio_flag[$monitoring_gpio_number]="1"
 									;;
 							
 							2|3|4)	capture_video_cctv alert_intrusion
+									gpio_flag[$monitoring_gpio_number]="1"
 									;;	
 						esac
 						break
@@ -194,11 +200,8 @@ check_gpio_point_monitoring(){
 						fi
 			fi			
 			
-			# debug "total array : $gpio_array[@]"
 			debug "monitoring_gpio_current_state ${monitoring_gpio_current_state}"
-			# debug "monitoring_gpio_value_access_closed ${monitoring_gpio_value_access_closed}"
 			debug "monitoring_gpio_name ${monitoring_gpio_name}"
-			# debug "monitoring_gpio_current_state ${monitoring_gpio_current_state}"
 			let "current_access_points_to_monitor=current_access_points_to_monitor+1"
 	done
 }
@@ -507,6 +510,8 @@ global_settings_load_up(){
 	while read -a row
 		do	gpio -g mode "${row[0]}" OUT
 			gpio -g write "${row[0]}" 1
+			monitoring_gpio_number="${row[0]}"
+			gpio_flag[$monitoring_gpio_number]="0"
 	done <<< $(sql_request_RO "select monitoring_gpio_number from GPIO")
 	echo "" > rfid_reader_capture.txt
 	sudo systemctl restart rfid_reader.service
@@ -606,7 +611,7 @@ while true; do
 						if [[ $SECONDS -ge $alarm_arming_end && "${arming_cancellation}" -ne 1 ]]
 							then	sound_player "${audio_signal_type}" message_alarm_armed
 									alarm_status=2
-									led_status yellow 999 & disown
+									led_status red 999 & disown
 									debug "We proceed to alarm status 2" 
 									event_log "alarm_monitoring.png" "Alarm is now activated and monitoring."
 						fi
@@ -617,10 +622,9 @@ while true; do
 		;;
 		
 	# This is the alarm state where the alarm is active and monitoring all the active access points.
-		2)	sleep 0.5w
+		2)	sleep 0.5
 			debug "We are in the status 2" 
 			sql_request_RW "UPDATE ALARM_TRACKING SET CURRENT_STATUS = '${alarm_status}'" & disown >> /dev/null 2>&1
-			led_status red 999 & disown
 			check_gpio_point_monitoring
 			if [[ "${password_attempt}" -lt 3 && ! "${alarm_status}" =~ ^('3'|'4')$ ]]
 				then	rfid_reader 2
@@ -653,7 +657,8 @@ while true; do
 			  do	sleep 0.7
 					rfid_reader 3
 					if [[ $SECONDS -gt "${last_call_before_alarm}" && "${last_call_sent}" -eq 0 ]]
-						then	sound_player "${audio_signal_type}" alterna_4 notification
+						then	send_sms intrusion
+								sound_player "${audio_signal_type}" alterna_4 notification
 								debug 'An acces point was detected as open, and still, no one has disabled the alarm, we are sending a last call sound if the legit user forgot to disable the alarm'
 					fi
 					if [[ "${password_attempt}" -lt 3 ]]
