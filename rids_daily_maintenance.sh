@@ -15,18 +15,18 @@ retention_duration_arduino_captures=$(sql_request_RW "select retention_duration_
 
 # cctv
 full_rentention_date_cctv=$(date +%Y-%m-%d  --date="$((1+${retention_duration_cctv})) days ago")
-while read -a row
-	do	rm cctv_captures/"${row[1]}"
-done <<< $(sql_request_RW "SELECT ID FROM CCTV_CAPTURES WHERE FILENAME <= '${full_rentention_date_cctv}' ")
+sql_request_RW "SELECT FILENAME FROM CCTV_CAPTURES WHERE FILENAME <= '${full_rentention_date_cctv}'" | while IFS= read -a row
+	do	rm cctv_captures/"${row[0]}"
+done
 sql_request_RW "DELETE FROM CCTV_CAPTURES WHERE FILENAME <= '${full_rentention_date_cctv}' "
 
 # event_logs
-full_rentention_date_logs=$(date +%Y-%m-%d  --date="$((1+${retention_duration_logs})) days ago")
+full_rentention_date_logs=$(date +%Y-%m-%d  --date="$((1+${retention_duration_event_logs})) days ago")
 sql_request_RW "DELETE FROM EVENT_LOG WHERE LOG_TIMESTAMP <= '${full_rentention_date_logs}' "
 
 
 # debug_logs
-full_rentention_date_debug_logs=$(date +%Y-%m-%d  --date="$((1+${retention_duration_logs})) days ago")
+#full_rentention_date_debug_logs=$(date +%Y-%m-%d  --date="$((1+${retention_duration_debug_logs})) days ago")
 find "logs/debug_$(date +%Y_%m_%d).txt" -mtime +"$((1+${retention_duration_debug_logs}))" -exec rm {} \;
 
 # arduino_captures
