@@ -1,0 +1,12 @@
+# To install in /etc/systemd/system
+[Unit]
+Description=MyAlarmPi
+
+[Service]
+WorkingDirectory=/home/pi/alarm/
+ExecStart=/bin/bash central.sh
+Restart=always
+User=pi
+
+[Install]
+WantedBy=multi-user.target

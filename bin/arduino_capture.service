@@ -1,0 +1,13 @@
+# To install in /etc/systemd/system
+[Unit]
+Description=Arduino_capture
+
+[Service]
+WorkingDirectory=/home/pi/alarm/
+ExecStart=/usr/bin/python arduino_capture.sh
+Restart=always
+User=pi
+
+[Install]
+WantedBy=multi-user.target
+
