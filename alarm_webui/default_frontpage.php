@@ -52,37 +52,32 @@ if(isset($_GET['action']))
 
 
 
-echo "<center><table>";
-echo "<table border=0 align=center><tr>";
-if($alarm_status == 5)
-{
-	echo "<td><img src=images/alarm_management.png height=120px></td><td><img src=images/alarm_state_0_greyed.png height=120px></td><td><img src=images/alarm_state_1_greyed.png height=120px></td><td><img src=images/alarm_state_2_greyed.png height=120px></td><td><img src=images/alarm_state_3_greyed.png height=120px></td><td><img src=images/alarm_state_4_greyed.png height=120px></td>";
+
+
+
+
+
+// include ('db-ro-connect.php');
+$status_query = sprintf("SELECT * FROM SETTINGS");
+$alarm_status_res = $conn->query($status_query);
+while($row = $alarm_status_res->fetch_assoc()) {
+   if ($row['arduino_connected'] == 1 )
+   {
+	   include ('state_panel_with_arduino.php');
+	   $arduino_connected=1;
+   }else{
+	   include ('state_panel_without_arduino.php');
+	   $arduino_connected=0;
+   }
 }
-if($alarm_status == 0)
-{
-	echo "<td><img src=images/alarm_management_greyed.png height=120px></td><td><img src=images/alarm_state_0.png height=120px></td><td><img src=images/alarm_state_1_greyed.png height=120px></td><td><img src=images/alarm_state_2_greyed.png height=120px></td><td><img src=images/alarm_state_3_greyed.png height=120px></td><td><img src=images/alarm_state_4_greyed.png height=120px></td>";
-}
-if($alarm_status == 1)
-{
-	echo "<td><img src=images/alarm_management_greyed.png height=120px></td><td><img src=images/alarm_state_0_greyed.png height=120px'></td><td><img src=images/alarm_state_1.png height=120px></td><td><img src=images/alarm_state_2_greyed.png height=120px></td><td><img src=images/alarm_state_3_greyed.png height=120px></td><td><img src=images/alarm_state_4_greyed.png height=120px></td>";
-}
-if($alarm_status == 2)
-{
-	echo "<td><img src=images/alarm_management_greyed.png height=120px></td><td><img src=images/alarm_state_0_greyed.png height=120px></td><td><img src=images/alarm_state_1_greyed.png height=120px></td><td><img src=images/alarm_state_2.png height=120px></td><td><img src=images/alarm_state_3_greyed.png height=120px></td><td><img src=images/alarm_state_4_greyed.png height=120px></td>";
-}
-if($alarm_status == 3)
-{
-	echo "<td><img src=images/alarm_management_greyed.png height=120px></td><td><img src=images/alarm_state_0_greyed.png height=120px></td><td><img src=images/alarm_state_1_greyed.png height=120px></td><td><img src=images/alarm_state_2_greyed.png height=120px></td><td><img src=images/alarm_state_3.png height=120px></td><td><img src=images/alarm_state_4_greyed.png height=120px></td>";
-}
-if($alarm_status == 4)
-{
-	echo "<td><img src=images/alarm_management_greyed.png height=120px></td><td><img src=images/alarm_state_0_greyed.png height=120px></td><td><img src=images/alarm_state_1_greyed.png height=120px></td><td><img src=images/alarm_state_2_greyed.png height=120px></td><td><img src=images/alarm_state_3.png height=120px></td><td><img src=images/alarm_state_4.png height=120px></td>";
-}
-echo "</tr></table>";
-echo "<br><hr>";
+
 
 echo "<div id=menu_lower>";
 echo "<a href=index.php?page=log_viewer><img src=images/alarm_event_log.png height=120px class='menu'>Check the event logs</a><br>";
+if($arduino_connected == 1)
+{
+	echo "<a href=index.php?page=arduino_tracking><img src=images/arduino_tracking.png height=120px class='menu'>Monitor the Arduino</a><br>";
+}
 echo "<a href=index.php?page=access_point_monitoring><img src=images/access_point_monitoring.png height=120px class='menu'>Monitor the Access points state</a><br>";
 echo "<a href=index.php?action=webui_alarm_arming><img src=images/alarm_web_arming.png height=120px class='menu'>Manually arm the alarm from the WebUI</a><br>";
 if($alarm_status == 5)

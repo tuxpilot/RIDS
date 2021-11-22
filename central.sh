@@ -10,7 +10,7 @@
 
 
 # List of all the functions
-
+ 
 pgrep mysql || sudo systemctl restart mysql
 
 led_status(){

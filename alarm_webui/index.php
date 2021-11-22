@@ -4,10 +4,9 @@ session_start();
 ?>
 <html>
 	<head>
-		<title>Webui</title>
+		<title>RIDS</title>
 		<link rel="stylesheet" type="text/css" href="index.css">
-		<link rel="stylesheet" href="path/to/plyr.css" />
-		<link rel="icon" type="image/png" href="images/favicon.ico" />
+		<link rel="icon" type="image/png" href="images/favicon.png" />
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 	</head>
 	<body bgcolor="#181a1b">
