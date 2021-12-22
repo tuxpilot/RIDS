@@ -1,7 +1,7 @@
 #define MQ2pin (A0)
 float MQ2Value;  //variable to store sensor value
 
-const int MQ7pin=8;
+#define MQ7pin (A1)
 float MQ7Value;  //variable to store sensor value
 
 #include "DHT.h" // include the DHT library

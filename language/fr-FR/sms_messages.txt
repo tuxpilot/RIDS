@@ -5,3 +5,4 @@ temperature_above='Attention, la centrale a détecté une température au dessus
 temperature_below='Attention, la centrale a détecté une température en dessous de la limite.'
 humidity_above='Attention, la centrale a détecté un taux d'humidité au dessus de la limite.'
 humidity_below='Attention, la centrale a détecté un taux d'humidité en dessous de la limite.'
+carbon_monoxide='Attention, la centrale a détecté un taux de Monoxyde de Carbon au dessus de la limite.'

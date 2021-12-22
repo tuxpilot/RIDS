@@ -10,7 +10,7 @@
 
 
 # List of all the functions
- 
+
 pgrep mysql || sudo systemctl restart mysql
 
 led_status(){
@@ -213,9 +213,9 @@ arduino_capture(){
 	if [[ "${arduino_connected}" -eq 1 && "${arduino_smoke_detector}" -eq 1 ]]
 		then	if [[ $(tail -n 10  arduino_capture.txt | grep 'MQ2_Value:' | awk -F ':' '{ print $2 }' | awk -F '.' '{ print $1 }' | tail -n 1) -gt "${arduino_smoke_detector_trigger_level}" ]]
 					then	alarm_status=6
-							debug "An abnormal level of smoke has been detected by the smoke detector: we go the the alarm status 6 immediately"
+                alarm_status_type='smoke'
+							  debug "An abnormal level of smoke has been detected by the smoke detector: we go the the alarm status 6 immediately"
 					else	debug "Smoke detector is online and the air smoke level are within the limits"
-
 				fi
 	fi
 	if [[ "${arduino_connected}" -eq 1 && "${arduino_temperature_sensor}" -eq 1 ]]
@@ -248,6 +248,14 @@ arduino_capture(){
 							fi
 				fi
 	fi
+  if [[ "${arduino_connected}" -eq 1 && "${arduino_carbon_monoxide_sensor}" -eq 1 ]]
+    then	if [[ $(tail -n 10  arduino_capture.txt | grep 'MQ7_Value:' | awk -F ':' '{ print $2 }' | awk -F '.' '{ print $1 }' | tail -n 1) -gt "${arduino_carbon_monoxide_trigger_level}" ]]
+          then	alarm_status=6
+                alarm_status_type='carbon_monoxide'
+                debug "An abnormal level of Carbon Monoxide has been detected by the Carbon Monoxide detector: we go the the alarm status 6 immediately"
+          else	debug "Carbon Monoxide detector is online and the Carbon Monoxide level are within the limits"
+        fi
+  fi
 }
 
 
@@ -258,21 +266,21 @@ send_sms(){
 	if [[ "${sms_sent}" -ne 1 ]]
 		then	while read -a row
 					do	FIRST_NAME="${row[1]}"
-						LAST_NAME="${row[2]}"
-						SEND_SMS="${row[3]}"
-						SEND_EMAIL="${row[4]}"
-						SMS_NUMBER="${row[5]}"
-						EMAIL_ADDRESS="${row[6]}"
-						recipient_name="${FIRST_NAME}_${LAST_NAME}"
-						# Based on the argument {1} retrieved from the function, we fetch the body of the sms and we send it to the recipient
-						sms_message_body=$(grep "${1}" "language/${language}/sms_messages.txt" | awk -F '=' '{ print $2 }' )
-						if [[ "${sms_sent}" -ne 1 && "${SEND_SMS}" -eq 1 ]]
-							then	php bin/OVH_API/php-ovh-dep/sms-sender.php "${SMS_NUMBER}" "${sms_message_body}" & disown >> /dev/null 2>&1
-						fi
-						# We add to the database the information regarding the fact that we just sent a SMS
-						sql_request_RW "UPDATE ALERT_TRACKING SET LAST_SMS_TIMESTAMP = `date +%s`"
-						debug "SMS FUNCTION : %Y_%m_%d__@__%H:%M, sending SMS to : ${recipient_name} with body message : ${sms_message_body}"
-				done <<< $(sql_request_RO "select * from ALERTS_RECIPIENTS")
+  						LAST_NAME="${row[2]}"
+  						SEND_SMS="${row[3]}"
+  						SEND_EMAIL="${row[4]}"
+  						SMS_NUMBER="${row[5]}"
+  						EMAIL_ADDRESS="${row[6]}"
+  						recipient_name="${FIRST_NAME}_${LAST_NAME}"
+  						# Based on the argument {1} retrieved from the function, we fetch the body of the sms and we send it to the recipient
+  						sms_message_body=$(grep "${1}" "language/${language}/sms_messages.txt" | awk -F '=' '{ print $2 }' )
+  						if [[ "${sms_sent}" -ne 1 && "${SEND_SMS}" -eq 1 ]]
+  							then	php bin/OVH_API/php-ovh-dep/sms-sender.php "${SMS_NUMBER}" "${sms_message_body}" & disown >> /dev/null 2>&1
+  						fi
+  						# We add to the database the information regarding the fact that we just sent a SMS
+  						sql_request_RW "UPDATE ALERT_TRACKING SET LAST_SMS_TIMESTAMP = `date +%s`"
+  						debug "SMS FUNCTION : %Y_%m_%d__@__%H:%M, sending SMS to : ${recipient_name} with body message : ${sms_message_body}"
+  				done <<< $(sql_request_RO "select * from ALERTS_RECIPIENTS")
 	fi
 }
 
@@ -558,6 +566,8 @@ global_settings_load_up(){
 			retention_duration_event_logs="${row[50]}"
 			retention_duration_debug_logs="${row[51]}"
 			retention_duration_arduino_captures="${row[52]}"
+			arduino_carbon_monoxide_sensor="${row[53]}"
+			arduino_carbon_monoxide_trigger_level="${row[54]}"
 	done <<< $(sql_request_RO "select * from SETTINGS")
 	total_access_points_to_monitor=$(sql_request_RO "SELECT COUNT(*) FROM GPIO")
 	led_status set_up_gpio
@@ -617,7 +627,7 @@ while true; do
 			arduino_capture
 
 			case "${override_mode}" in
-				6)	global_settings_load_up
+				9)	global_settings_load_up
 					event_log "alarm_restart_loading.png" "The alarm has finished reloading the global settings"
 					sql_request_RW "UPDATE SETTINGS SET central_mode_override = '0'"
 					sound_player "${audio_signal_type}" alterna_1 notification
@@ -806,9 +816,9 @@ while true; do
 		# This is the alarm state where the alarm has detected smoke from an arduino conected device like the MQ-2
 		6)	sleep 0.6
 			debug "We are in the status 6"
-			event_log "alarm_siren_on.png" "SMOKE detected alarm was triggered!"
-			send_sms smoke_detected
-			sound_player "${audio_signal_type}" message_alarm_smoke_detected
+			event_log "alarm_siren_on.png" "${alarm_status_type} detected, alarm was triggered!"
+			send_sms "${alarm_status_type}"
+			sound_player "${audio_signal_type}" "message_alarm_${alarm_status_type}_detected"
 			led_status red 120 & disown
 			triggered_alarm=1
 			siren_end=$((SECONDS+"${alarm_siren_max_time}"))
