@@ -1,6 +1,9 @@
 <?php
 session_start();
 // $language = shell_exec("cat ../settings.txt | grep language | awk -F '=' '{ print $2 }' | tr -d ' '");
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 ?>
 <html>
 	<head>
@@ -17,7 +20,7 @@ session_start();
 					<a href='index.php'>
 						<img src='images/logo_banner.png' height='70px'>
 					</a>
-					
+
 				</div>
 			</div>
 			<div id="leftstructure">
@@ -34,7 +37,7 @@ session_start();
 				while($row = $alarm_status_res->fetch_assoc()) {
 				   $alarm_status=$row['CURRENT_STATUS'];
 				}
-				
+
 				$cctv_captures_path = "/home/pi/alarm/cctv_captures";
 				if(isset($_GET['page']))
 				{
@@ -43,7 +46,7 @@ session_start();
 				}else{
 					include ("default_frontpage.php");
 				}
-				
+
 				?>
 				<center>
 				</center>
