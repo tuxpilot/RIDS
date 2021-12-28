@@ -627,11 +627,6 @@ while true; do
 			arduino_capture
 
 			case "${override_mode}" in
-				9)	global_settings_load_up
-					event_log "alarm_restart_loading.png" "The alarm has finished reloading the global settings"
-					sql_request_RW "UPDATE SETTINGS SET central_mode_override = '0'"
-					sound_player "${audio_signal_type}" alterna_1 notification
-				;;
 
 				5)	sound_player "${audio_signal_type}" alterna_1 notification
 					sound_player "${audio_signal_type}" message_alarm_management_mode_entered
@@ -802,6 +797,15 @@ while true; do
 			sql_request_RW "UPDATE ALARM_TRACKING SET CURRENT_STATUS = '${alarm_status}'"
 			override_mode=$(sql_request_RO "select central_mode_override from SETTINGS")
 			debug "The central_mode_override read is : ${override_mode}"
+			if [[ "${override_mode}" -eq 0 ]]
+				then	global_settings_load_up
+						sleep 2
+						event_log "alarm_restart_loading.png" "The alarm has finished reloading the global settings"
+						sql_request_RW "UPDATE SETTINGS SET central_mode_override = '0'"
+						alarm_status=0
+						sound_player "${audio_signal_type}" alterna_4 notification
+			fi
+
 			if [[ "${override_mode}" -eq 0 ]]
 				then	debug "We leave the management mode"
 						sound_player "${audio_signal_type}" alterna_1 notification
