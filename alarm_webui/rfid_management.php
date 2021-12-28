@@ -1,41 +1,127 @@
 <?php
-if(isset($_GET['action']))
-{
-	$rfid_number = $_GET['rfid_number'];
-	$action = $_GET['action'];
-	if($action == "delete" && $alarm_status == 5)
-	{
-		$delete_action = shell_exec("sed -i '/^".$rfid_number."/d' ../access_db/rfid_cards_sorted.txt");	
-	}
-}
+
+
+
 
 if($alarm_status != 5)
 {
 	echo "<span style=color:red>Warning the alarm is not in management mode, no modification can be made<span>.<br>";
 }else{
-	$fn = fopen("../access_db/rfid_cards_sorted.txt","r");
-	echo "<center><table class=rfid_management>";
-	echo "<tr><td>RFID number</td><td>User attribution</td><td>Action</td></tr>";
-	while(! feof($fn))  {
-	$full_rfid_line = fgets($fn);
-	  $splitted_rfid_line = explode("@", $full_rfid_line);
-	  if($splitted_rfid_line[0] != "")
-	  {
-		  
-		  if (strpos($splitted_rfid_line[1], 'TO_CUSTOMIZE') !== false)
-		  {
-			  echo "<tr><td>".$splitted_rfid_line[0]."</td><td>";
-			  echo "<form action=edit_rfid_attribution.php><input id=customize_rfid_name value=".$splitted_rfid_line[1]."></input></form></td><td><a href=index.php?page=rfid_management&action=delete&rfid_number=".$splitted_rfid_line[0]."><img src=images/delete.png height=40px></a>";
-			  echo "&emsp;<a href=index.php?page=rfid_management&action=edit&rfid_number=".$splitted_rfid_line[0]."><input type='image' src='images/edit.png' height=40px name='clicImage'/></a>";
-		  }else{
-			  echo "<tr><td>".$splitted_rfid_line[0]."</td><td>";
-			  echo $splitted_rfid_line[1]."</td><td><a href=index.php?page=rfid_management&action=delete&rfid_number=".$splitted_rfid_line[0]."><img src=images/delete.png height=40px></a>";
-		  }
-		  echo "</td></tr>";
-	  }
+
+
+
+
+	if(isset($_GET['action']))
+	{
+		$action = $_GET['action'];
+		if($action == "update_rfid_new_infos" && $alarm_status == 5)
+		{
+			$attribution_first_name = $_GET['attribution_first_name'];
+			$attribution_last_name = $_GET['attribution_last_name'];
+			$rfid_card_flag = $_GET['rfid_card_flag'];
+			$ID = $_GET['ID'];
+			include ('db-rw-connect.php');
+			echo "attribution_first_name :".$attribution_first_name."<br>";
+			echo "attribution_last_name :".$attribution_last_name."<br>";
+			echo "rfid_card_flag :".$rfid_card_flag."<br>";
+			echo "ID :".$ID."<br>";
+			if($attribution_first_name != "")
+			{
+				$actionrequest = sprintf("UPDATE RFID SET attribution_first_name = '".$attribution_first_name."' WHERE ID = '".$ID."'");
+				$actionresult = $conn->query($actionrequest);
+			}
+			if($attribution_last_name != "")
+			{
+				$actionrequest = sprintf("UPDATE RFID SET attribution_last_name = '".$attribution_last_name."' WHERE ID = '".$ID."'");
+				$actionresult = $conn->query($actionrequest);
+			}
+			if($rfid_card_flag != "")
+			{
+				$actionrequest = sprintf("UPDATE RFID SET rfid_card_flag = '".$rfid_card_flag."' WHERE ID = '".$ID."'");
+				$actionresult = $conn->query($actionrequest);
+			}
+		}
+
+		if($action == "delete" && $alarm_status == 5)
+		{
+			$rfid_card_ID = $_GET['rfid_card_ID'];
+			include ('db-rw-connect.php');
+			$actionrequest = sprintf("DELETE FROM RFID WHERE rfid_card_ID = '".$rfid_card_ID."'");
+			$actionresult = $conn->query($actionrequest);
+		}
+
+		if($action == "setting_to_change" && $alarm_status == 5)
+		{
+			$ID = $_GET['ID'];
+			$rfidlistquery = sprintf("SELECT * FROM RFID  WHERE ID ='".$ID."'");
+			$rfidlistresult = $conn->query($rfidlistquery);
+			while($row = $rfidlistresult->fetch_assoc()) {
+				$attribution_first_name = $row['attribution_first_name'];
+				$attribution_last_name = $row['attribution_last_name'];
+				$rfid_card_flag = $row['rfid_card_flag'];
+			}
+?>
+
+			<form action="index.php">
+			  <label for="attribution_first_name"><b>Attribution First Name</b></label>
+				<input type="text" placeholder=<?php echo $attribution_first_name; ?> name="attribution_first_name"><br>
+			  <label for="attribution_last_name"><b>Attribution Last Name</b></label>
+				<input type="text" placeholder=<?php echo $attribution_last_name; ?> name="attribution_last_name"><br>
+			  <label for="rfid_card_flag"><b>RFID Card Flag</b></label>
+				<select name="rfid_card_flag" id="rfid_card_flag">
+					<option value="inactive">inactive</option>
+					<option value="active">active</option>
+					<option value="" selected></option>
+				</select>
+				<input id="page" name="page" type="hidden" value="rfid_management">
+				<input id="ID" name="ID" type="hidden" value=<?php echo $ID; ?>>
+				<input id="action" name="action" type="hidden" value="update_rfid_new_infos"><br>
+			  <button type="submit" class="btn">Change now!</button>
+			</form>
+			<br><br>
+<?php
+		}
+		if($action == "write_new_setting" && $alarm_status == 5)
+		{
+			$attribution_first_name = $_GET['attribution_first_name'];
+			$attribution_last_name = $_GET['attribution_last_name'];
+			$rfid_card_flag = $_GET['rfid_card_flag'];
+			$ID = $_GET['ID'];
+			include ('db-rw-connect.php');
+			$actionrequest = sprintf("UPDATE SETTINGS SET ".$ParName." = '".$ParValue."'");
+			$actionresult = $conn->query($actionrequest);
+		}
+
 	}
-	echo "<table>";
-	fclose($fn);
-	echo "</center>";
+
+
+
+
+
+
+
+
+	$rfidlistquery = sprintf("SELECT * FROM RFID  ORDER BY rfid_card_ID DESC");
+	$rfidlistresult = $conn->query($rfidlistquery);
+	echo "<center><table border='0' cellpadding='10' cellspacing='0' style='border-collapse: collapse; width: 30%; margin: 1.5em; font-family: Arial, Helvetica, sans-serif; font-size: 0.85em;'><tbody>
+	<tr style='border-bottom: 1px solid #ccc; line-height: 1.8em;'>
+		<td>RFID Card ID</td>
+		<td>FIRST NAME</td>
+		<td>LAST NAME</td>
+		<td>RFID STATUS</td>
+	</tr>";
+	while($row = $rfidlistresult->fetch_assoc()) {
+		echo "<tr style='border-bottom: 1px solid #ccc; line-height: 1.8em;'>
+				<td>".$row['rfid_card_ID']."</td>
+				<td>".$row['attribution_first_name']."</td>
+				<td>".$row['attribution_last_name']."</td>
+				<td>".$row['rfid_card_flag']."</td>
+				<td><a href='index.php?page=rfid_management&action=setting_to_change&ID=".$row['ID']."'><img src='images/setting_changing.png' height='40px'></a></td>
+				<td><a href='index.php?page=rfid_management&action=delete&rfid_card_ID=".$row['rfid_card_ID']."'><img src='images/delete.png' height='40px'></a></td>
+			</tr>";
+	}
+
+	echo "</table></center>";
 }
+
 ?>
