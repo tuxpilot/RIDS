@@ -4,6 +4,10 @@ session_start();
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
+if(isset($_GET['page']))
+{
+	$page = $_GET['page'];
+}
 ?>
 <html>
 	<head>
@@ -24,7 +28,7 @@ error_reporting(E_ALL);
 				</div>
 			</div>
 			<div id="leftstructure">
-				&nbsp;
+				<a href=index.php <img src="images/refresh.png" height="40px"></a>
 			</div>
 			<div id="rightstructure">
 				&nbsp;
@@ -34,6 +38,7 @@ error_reporting(E_ALL);
 				include ('db-ro-connect.php');
 				$status_query = sprintf("SELECT CURRENT_STATUS FROM ALARM_TRACKING ");
 				$alarm_status_res = $conn->query($status_query);
+				$conn->close();
 				while($row = $alarm_status_res->fetch_assoc()) {
 				   $alarm_status=$row['CURRENT_STATUS'];
 				}
@@ -41,7 +46,6 @@ error_reporting(E_ALL);
 				$cctv_captures_path = "/home/pi/alarm/cctv_captures";
 				if(isset($_GET['page']))
 				{
-					$page = $_GET['page'];
 					include ($page.".php");
 				}else{
 					include ("default_frontpage.php");

@@ -299,13 +299,14 @@ rfid_reader(){
 	last_alarm_known_status="${alarm_status}"
 	debug "function rfid : last_alarm_known_status = ${last_alarm_known_status}"
 	if 	[[ ! -z "${rfid_reader_capture}" ]]
-		then	valid_rfid_request=$(sql_request_RO "select * from RFID WHERE rfid_card_ID = ${rfid_reader_capture} AND rfid_card_flag <>'disabled'")
+		then	valid_rfid_request=$(sql_request_RO "select * from RFID WHERE rfid_card_ID = '${rfid_reader_capture}' AND rfid_card_flag <>'disabled'")
 				if 	[[ -z "${valid_rfid_request}" ]]
 					then	if	[[ "${alarm_status}" -eq 5 ]]
 								then	debug "A new RFID card has been in contact with the RFID reader"
 										sql_request_RW "INSERT INTO RFID (ID, rfid_card_ID, attribution_first_name, attribution_last_name, rfid_card_flag ) VALUES ( NULL, '${rfid_reader_capture}', 'TO_CUSTOMIZE', 'TO_CUSTOMIZE', 'active')"
 										sound_player "${audio_signal_type}" message_alarm_rfid_added
 										event_log "added_rfid.png" "New RFID added with success."
+										echo "" > rfid_reader_capture.txt
 
 								else	debug "Unknown RFID!: ${rfid_reader_capture}"
 										event_log "wrong_rfid_card.png" "Unknown RFID detected !"

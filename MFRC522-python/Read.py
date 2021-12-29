@@ -25,6 +25,7 @@ import RPi.GPIO as GPIO
 import MFRC522
 import signal
 import time
+import hashlib
 
 continue_reading = True
 
@@ -49,15 +50,15 @@ print "Press Ctrl-C to stop."
 while continue_reading:
 
     #To ease some ressources, we add a small delay between each loop
-    time.sleep(0.5)
-    
-    # Scan for cards    
+    time.sleep(0.7)
+
+    # Scan for cards
     (status,TagType) = MIFAREReader.MFRC522_Request(MIFAREReader.PICC_REQIDL)
 
     # If a card is found
     if status == MIFAREReader.MI_OK:
         print "Card detected"
-    
+
     # Get the UID of the card
     (status,uid) = MIFAREReader.MFRC522_Anticoll()
 
@@ -65,14 +66,23 @@ while continue_reading:
     if status == MIFAREReader.MI_OK:
 
         # Print UID
-        print "Card read UID: %s%s%s%s" % (uid[0], uid[1], uid[2], uid[3])
+        #print "Card read clear UID: %s%s%s%s" % (uid[0], uid[1], uid[2], uid[3])
+        var = "%s%s%s%s" % (uid[0], uid[1], uid[2], uid[3])
+        md5_hash = hashlib.md5()
+        md5_hash.update(var)
+        #print(md5_hash.hexdigest())
         f = open('../rfid_reader_capture.txt', 'w')
-        f.write("%s%s%s%s" % (uid[0], uid[1], uid[2], uid[3]))
+        f.write((md5_hash.hexdigest()))
         f.close()
-    
+
+        #print "Card read UID: %s%s%s%s" % (uid[0], uid[1], uid[2], uid[3])
+        #f = open('../rfid_reader_capture.txt', 'w')
+        #f.write("%s%s%s%s" % (uid[0], uid[1], uid[2], uid[3]))
+        #f.close()
+
         # This is the default key for authentication
         key = [0xFF,0xFF,0xFF,0xFF,0xFF,0xFF]
-        
+
         # Select the scanned tag
         MIFAREReader.MFRC522_SelectTag(uid)
 
@@ -85,4 +95,3 @@ while continue_reading:
             MIFAREReader.MFRC522_StopCrypto1()
         else:
             print "Authentication error"
-

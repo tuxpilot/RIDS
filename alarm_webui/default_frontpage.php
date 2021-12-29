@@ -8,8 +8,8 @@ if(isset($_GET['action']))
 {
 	$action = $_GET['action'];
 	include ('db-rw-connect.php');
-	
-		
+
+
 	if($action == "enter_management_mode" && $alarm_status == 0)
 	{
 		$mode_changer_query = sprintf("UPDATE SETTINGS SET central_mode_override = '5'");
@@ -18,6 +18,7 @@ if(isset($_GET['action']))
 			$message  = 'Requête invalide : ' . mysql_error() . "\n";
 			$message .= 'Requête complète : ' . $mode_changer_query;
 			die($message);
+			$conn->close();
 		}
 	}
 	if($action == "webui_alarm_arming" && $alarm_status == 0)
@@ -28,6 +29,7 @@ if(isset($_GET['action']))
 			$message  = 'Requête invalide : ' . mysql_error() . "\n";
 			$message .= 'Requête complète : ' . $mode_changer_query;
 			die($message);
+			$conn->close();
 		}
 	}
 	if($action == "enter_management_mode" && $alarm_status != 0)
@@ -46,6 +48,7 @@ if(isset($_GET['action']))
 			$message  = 'Requête invalide : ' . mysql_error() . "\n";
 			$message .= 'Requête complète : ' . $mode_changer_query;
 			die($message);
+			$conn->close();
 		}
 	}
 }

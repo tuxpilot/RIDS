@@ -16,10 +16,11 @@ if(isset($_GET['API']))
 			while($rowt = $trackingresult->fetch_assoc()) {
 				echo $rowt['CURRENT_STATUS'];
 			}
+			$conn->close();
 		}else{
 			echo "Invalid API Number or Disabled API!";
 		}
 	}
 }
-	
+
 ?>

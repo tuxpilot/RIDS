@@ -6,7 +6,7 @@
 
 if($alarm_status == 5)
 {
-	echo "<span style=color:red>Warning the alarm is not in management mode, tracking is disabled! Exit management mode first, or you won't see any effective tracking of your access points.<span>.<br>";
+	echo "<span style=color:red>Warning the alarm is currently in management mode, tracking is disabled!<br> Exit management mode first, or you won't see any effective tracking of your access points.<span>.<br>";
 }else{
 	if(isset($_GET['auto_refresh']))
 	{
@@ -21,7 +21,7 @@ if($alarm_status == 5)
 
 	$gpioquery = sprintf("SELECT * FROM GPIO");
 	$gpioresult = $conn->query($gpioquery);
-
+	$conn->close();
 
 
 	echo "<center><table border='0' cellpadding='0' cellspacing='0' style='border-collapse: collapse; width: 80%; margin: 1.5em; font-family: Arial, Helvetica, sans-serif; font-size: 0.85em;'><tbody>";

@@ -19,6 +19,7 @@ if($alarm_status != 5)
 			include ('db-rw-connect.php');
 			$actionrequest = sprintf("UPDATE SETTINGS SET central_mode_override = '9'");
 			$actionresult = $conn->query($actionrequest);
+			$conn->close();
 		}
 
 		if($action == "setting_to_change" && $alarm_status == 5)
@@ -52,6 +53,7 @@ if($alarm_status != 5)
 			include ('db-rw-connect.php');
 			$actionrequest = sprintf("UPDATE SETTINGS SET ".$ParName." = '".$ParValue."'");
 			$actionresult = $conn->query($actionrequest);
+			$conn->close();
 		}
 
 	}

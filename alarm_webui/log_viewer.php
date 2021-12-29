@@ -11,6 +11,7 @@ if (!$logresult) {
     $message  = 'Requête invalide : ' . mysql_error() . "\n";
     $message .= 'Requête complète : ' . $logquery;
     die($message);
+    $conn->close();
 }
 
 

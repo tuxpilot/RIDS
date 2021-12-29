@@ -3,6 +3,7 @@ include ('db-ro-connect.php');
 
 $cctvlistquery = sprintf("SELECT * FROM CCTV_CAPTURES  ORDER BY FILENAME DESC");
 $cctvlistresult = $conn->query($cctvlistquery);
+$conn->close();
 
 if(isset($_GET['action']))
 {
@@ -14,6 +15,7 @@ if(isset($_GET['action']))
 		$actionrequest = sprintf("DELETE FROM CCTV_CAPTURES WHERE FILENAME = '".$media_filename."'");
 		$actionresult = $conn->query($actionrequest);
 		$file_purge = shell_exec("rm cctv_captures/".$media_filename);
+		$conn->close();
 	}else{
 		echo "<span style=color:red>Warning the alarm is not in management mode, no deletion can be made<span>.<br>";
 	}

@@ -40,6 +40,7 @@ if($alarm_status != 5)
 				$actionrequest = sprintf("UPDATE RFID SET rfid_card_flag = '".$rfid_card_flag."' WHERE ID = '".$ID."'");
 				$actionresult = $conn->query($actionrequest);
 			}
+			$conn->close();
 		}
 
 		if($action == "delete" && $alarm_status == 5)
@@ -48,6 +49,7 @@ if($alarm_status != 5)
 			include ('db-rw-connect.php');
 			$actionrequest = sprintf("DELETE FROM RFID WHERE rfid_card_ID = '".$rfid_card_ID."'");
 			$actionresult = $conn->query($actionrequest);
+			$conn->close();
 		}
 
 		if($action == "setting_to_change" && $alarm_status == 5)
@@ -90,6 +92,7 @@ if($alarm_status != 5)
 			include ('db-rw-connect.php');
 			$actionrequest = sprintf("UPDATE SETTINGS SET ".$ParName." = '".$ParValue."'");
 			$actionresult = $conn->query($actionrequest);
+			$conn->close();
 		}
 
 	}
@@ -105,7 +108,7 @@ if($alarm_status != 5)
 	$rfidlistresult = $conn->query($rfidlistquery);
 	echo "<center><table border='0' cellpadding='10' cellspacing='0' style='border-collapse: collapse; width: 30%; margin: 1.5em; font-family: Arial, Helvetica, sans-serif; font-size: 0.85em;'><tbody>
 	<tr style='border-bottom: 1px solid #ccc; line-height: 1.8em;'>
-		<td>RFID Card ID</td>
+		<td>Hashed RFID Card ID</td>
 		<td>FIRST NAME</td>
 		<td>LAST NAME</td>
 		<td>RFID STATUS</td>
