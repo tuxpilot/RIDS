@@ -26,12 +26,14 @@ echo "<center><table border='0' cellpadding='0' cellspacing='0' style='border-co
 		<td>Trigerring event</td>
 		<td>Trigerring origin</td>
 		<td>Action</td>
+		<td>Camera name</td>
 	</tr>";
 while($row = $cctvlistresult->fetch_assoc()) {
 	echo "<tr style='border-bottom: 1px solid #ccc; line-height: 1.8em;'>
 			<td><b><h2><a href=cctv_captures/".$row['FILENAME'].">".$row['FILENAME']."</a></h2></b></td>
 			<td><b>".$row['TRIGGERING_EVENT']."</b></td>
-			<td><b>TBD</b></td>
+			<td><b>".$row['TRIGGERING_ORIGIN']."</b></td>
+			<td><b>".$row['CAMERA_NAME']."</b></td>
 			<td><a href='index.php?page=media_sequence&action=delete&media_filename=".$row['FILENAME']."'><img src='images/delete.png' height='40px'></a></td>
 		</tr>";
 }

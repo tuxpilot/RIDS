@@ -89,6 +89,7 @@ if($alarm_status == 5)
 	echo "<a href=index.php?page=rfid_management><img src=images/rfid_management.png height=120px class='menu'>Add/Remove/Manage RFID cards</a><br>";
 	echo "<a href=index.php?page=settings_management><img src=images/global_settings.png height=120px class='menu'>Edit the Global Settings</a><br>";
 	echo "<a href=index.php?page=gpio_settings><img src=images/gpio_settings.png height=120px class='menu'>GPIO management</a><br>";
+	echo "<a href=index.php?page=cameras_management><img src=images/cameras_management.png height=120px class='menu'>Cameras management</a><br>";
 	echo "<a href=index.php?action=leave_management_mode><img src=images/alarm_management_leave.png height=120px class='menu'>Leave management mode</a><br>";
 }else{
 	echo "<a href=index.php?action=enter_management_mode><img src=images/rfid_management.png height=120px class='menu'>Enter management mode</a><br>";

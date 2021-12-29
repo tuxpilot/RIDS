@@ -55,6 +55,7 @@ if($alarm_status != 5)
 		if($action == "setting_to_change" && $alarm_status == 5)
 		{
 			$ID = $_GET['ID'];
+			include ('db-ro-connect.php');
 			$rfidlistquery = sprintf("SELECT * FROM RFID  WHERE ID ='".$ID."'");
 			$rfidlistresult = $conn->query($rfidlistquery);
 			while($row = $rfidlistresult->fetch_assoc()) {

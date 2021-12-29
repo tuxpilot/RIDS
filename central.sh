@@ -176,11 +176,11 @@ check_gpio_point_monitoring(){
 						sql_request_RW "UPDATE GPIO SET monitoring_gpio_current_state = '${monitoring_gpio_current_state}'" & disown >> /dev/null 2>&1
 						gpio_flag[$monitoring_gpio_number]="0"
 						case "${alarm_status}" in
-							0|1)	capture_video_cctv notification_door_opened
+							0|1)	capture_video_cctv notification_door_opened "${monitoring_gpio_name}"
 									gpio_flag[$monitoring_gpio_number]="1"
 									;;
 
-							2|3|4)	capture_video_cctv alert_intrusion
+							2|3|4)	capture_video_cctv alert_intrusion "${monitoring_gpio_name}"
 									gpio_flag[$monitoring_gpio_number]="1"
 									;;
 						esac
@@ -455,13 +455,13 @@ capture_video_cctv(){
 				# If the argument is NOT 'alert' AND if the setting 'video_capture_on_alert_only' is set to 0 (disabled), then we capture the stream and put it in a video file, and we upload the datas to the database to be able to retrieve it in the WebUI
 				if [[ "${1}" -ne "alert" && "${video_capture_on_alert_only}" -eq 0 ]]
 					then	nohup ffmpeg -t "${video_capture_timing}" -i rtsp://"${video_capture_username}":"${video_capture_password}"@"${video_capture_url}" -c copy -map 0 -f segment -segment_time 600 -segment_format mp4 -strftime 1 "cctv_captures/${cctv_actual_filename}" -s '1920x1080' &
-							sql_request_RW "INSERT INTO CCTV_CAPTURES ( ID, FILENAME, TRIGGERING_EVENT ) VALUES ( NULL, '${cctv_actual_filename}', '${1}' )"
+							sql_request_RW "INSERT INTO CCTV_CAPTURES ( ID, FILENAME, TRIGGERING_ORIGIN, TRIGGERING_EVENT, CAMERA_NAME ) VALUES ( NULL, '${cctv_actual_filename}', '${2}', '${1}', 'camera_entree')"
 				fi
 
 				# If the argument is 'alert', then we capture the stream and put it in a video file, and we upload the datas to the database to be able to retrieve it in the WebUI
 				if [[ "${1}" -eq "alert" ]]
 					then	nohup ffmpeg -t "${video_capture_timing}" -i rtsp://"${video_capture_username}":"${video_capture_password}"@"${video_capture_url}" -c copy -map 0 -f segment -segment_time 600 -segment_format mp4 -strftime 1 "cctv_captures/${cctv_actual_filename}" -s '1920x1080' &
-							sql_request_RW "INSERT INTO CCTV_CAPTURES ( ID, FILENAME, TRIGGERING_EVENT ) VALUES ( NULL, '${cctv_actual_filename}', '${1}' )"
+							sql_request_RW "INSERT INTO CCTV_CAPTURES ( ID, FILENAME, TRIGGERING_ORIGIN, TRIGGERING_EVENT, CAMERA_NAME ) VALUES ( NULL, '${cctv_actual_filename}', '${2}', '${1}', 'camera_entree')"
 				fi
 	fi
 }
@@ -500,6 +500,7 @@ sql_request_RW(){
 timestamp_last_sms(){
 	sql_request_RO "SELECT LAST_SMS_TIMESTAMP FROM ALERT_TRACKING"
 }
+
 
 # Function to know how much seconds have elapsed since the last time a SMS was sent
 check_timestamp_last_sms(){
@@ -572,6 +573,17 @@ global_settings_load_up(){
 	done <<< $(sql_request_RO "select * from SETTINGS")
 	total_access_points_to_monitor=$(sql_request_RO "SELECT COUNT(*) FROM GPIO")
 	led_status set_up_gpio
+	# We retrieve the last known status of the alarm, in case it was restarted or reloaded in another state that 0 (idle) or 5 (management)
+	alarm_status_before_restart=$(sql_request_RO "SELECT CURRENT_STATUS FROM ALARM_TRACKING")
+	if [[ ! "${alarm_status}" =~ ^('0'|'5')$ ]]
+		then	sql_request_RW "UPDATE ALERT_TRACKING SET LAST_SMS_TIMESTAMP = `date +%s`"
+					sound_player "${audio_signal_type}" message_alarm_central_rebooted
+					capture_video_cctv alert_intrusion 'central_event'
+					send_sms central_rebooted
+					event_log "The centrale was rebooted or reloaded while it was NOT in idle or management mode. The alarm status was ${alarm_status_before_restart} before this."
+					debug "The centrale was rebooted or reloaded while it was NOT in idle or management mode. The alarm status was ${alarm_status_before_restart} before this."
+	fi
+	
 	password_attempt=0
 	alarm_status="${default_alarm_status}"
 	if	[[ "${gpio_piezo_number}" -ne 99 ]] # If the GPIO is not 99, then their is a piezo connected and we have to initiate it.
@@ -598,7 +610,7 @@ if [[ $(awk '{print $1}' /proc/uptime | awk -F '.' '{ print $1 }') -lt 120 && "$
 	then	send_sms central_rebooted
 			sql_request_RW "UPDATE ALERT_TRACKING SET LAST_SMS_TIMESTAMP = `date +%s`"
 			sound_player "${audio_signal_type}" message_alarm_central_rebooted
-			capture_video_cctv alert_intrusion
+			capture_video_cctv alert_intrusion 'central_event'
 fi
 
 # Everytime the Rasberry restart or the service restart, we need to know it. So we add this as an event to the event log.
@@ -775,7 +787,7 @@ while true; do
 			siren_end=$((SECONDS+"${alarm_siren_max_time}"))
 			sound_player "${audio_signal_type}" alterna_120 intrusion
 			sql_request_RW "UPDATE ALARM_TRACKING SET CURRENT_STATUS = '${alarm_status}'"
-			capture_video_cctv alert_intrusion
+			capture_video_cctv alert_intrusion 'central_event'
 			arduino_capture
 			while [[ $SECONDS -lt $siren_end ]]
 				do	sleep 0.7
@@ -829,7 +841,7 @@ while true; do
 			siren_end=$((SECONDS+"${alarm_siren_max_time}"))
 			sound_player "${audio_signal_type}" alterna_120 intrusion
 			sql_request_RW "UPDATE ALARM_TRACKING SET CURRENT_STATUS = '${alarm_status}'"
-			capture_video_cctv alert_intrusion
+			capture_video_cctv alert_intrusion 'central_event'
 			while [[ $SECONDS -lt $siren_end ]]
 				do	sleep 0.7
 					rfid_reader 4

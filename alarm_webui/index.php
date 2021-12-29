@@ -24,11 +24,21 @@ if(isset($_GET['page']))
 					<a href='index.php'>
 						<img src='images/logo_banner.png' height='70px'>
 					</a>
-
 				</div>
 			</div>
 			<div id="leftstructure">
-				<a href=index.php <img src="images/refresh.png" height="40px"></a>
+				<br><br>
+				<?php
+					if(isset($_GET['page']))
+					{
+						$page = $_GET['page'];
+						echo "<a href=index.php?page=".$page."><img src='images/refresh.png' height='40px'>Refresh the page</a>";
+					}else{
+						echo "<a href=index.php><img src='images/refresh.png' height='40px'>Refresh the page</a>";
+					}
+				?>
+				<br><br>
+				<a href=index.php><img src='images/logo.png' height='40px'>Return to the menu</a>
 			</div>
 			<div id="rightstructure">
 				&nbsp;

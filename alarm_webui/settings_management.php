@@ -24,6 +24,7 @@ if($alarm_status != 5)
 
 		if($action == "setting_to_change" && $alarm_status == 5)
 		{
+			include ('db-rw-connect.php');
 			$setting_to_change = $_GET['setting_to_change'];
 			$resource = $conn->query("SELECT  ".$setting_to_change." FROM SETTINGS");
 			while ( $rows = $resource->fetch_assoc() ) {
