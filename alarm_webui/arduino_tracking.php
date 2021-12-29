@@ -14,6 +14,7 @@ if (strpos($test_arduino_connected, 'arduino_connected') !== false) {
 						<td colspan=2>Arduino extension type</td>
 						<td>Current value</td>
 						</tr>";
+				include ('db-ro-connect.php');
 				$req_arduino_enabled_modules = sprintf("SELECT arduino_smoke_detector,arduino_temperature_sensor,arduino_humidity_sensor,arduino_carbon_monoxide_sensor FROM SETTINGS");
 				$arduino_enabled_modules = $conn->query($req_arduino_enabled_modules);
 				while($row = $arduino_enabled_modules->fetch_assoc()) {

@@ -65,7 +65,7 @@ if($alarm_status != 5)
 
 
 
-
+	include ('db-ro-connect.php');
 	$resource = $conn->query('SELECT * FROM SETTINGS');
 	echo "<center><table border='0' cellpadding='10' cellspacing='0' style='border-collapse: collapse; width: 30%; margin: 1.5em; font-family: Arial, Helvetica, sans-serif; font-size: 0.85em;'><tbody>";
 	while ( $rows = $resource->fetch_assoc() ) {
@@ -76,6 +76,7 @@ if($alarm_status != 5)
 	  }
 	echo "</table></center>";
 	echo "<a href='index.php?page=settings_management&action=reload_settings'><button>Reload the settings</button></a>";
+	$conn->close();
 }
 
 ?>

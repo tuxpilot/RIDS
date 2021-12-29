@@ -60,9 +60,10 @@ if(isset($_GET['action']))
 
 
 
-// include ('db-ro-connect.php');
+include ('db-ro-connect.php');
 $status_query = sprintf("SELECT * FROM SETTINGS");
 $alarm_status_res = $conn->query($status_query);
+$conn->close();
 while($row = $alarm_status_res->fetch_assoc()) {
    if ($row['arduino_connected'] == 1 )
    {
@@ -94,5 +95,4 @@ if($alarm_status == 5)
 }
 echo "<a href=index.php?page=media_sequence><img src=images/media_sequence.png height=120px class='menu'>Enter the Media sequence page</a><br>";
 echo "</div>";
-
 ?>

@@ -103,7 +103,7 @@ if($alarm_status != 5)
 
 
 
-
+	include ('db-ro-connect.php');
 	$rfidlistquery = sprintf("SELECT * FROM RFID  ORDER BY rfid_card_ID DESC");
 	$rfidlistresult = $conn->query($rfidlistquery);
 	echo "<center><table border='0' cellpadding='10' cellspacing='0' style='border-collapse: collapse; width: 30%; margin: 1.5em; font-family: Arial, Helvetica, sans-serif; font-size: 0.85em;'><tbody>
