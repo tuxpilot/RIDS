@@ -78,6 +78,7 @@ while($row = $alarm_status_res->fetch_assoc()) {
 
 echo "<div id=menu_lower>";
 echo "<a href=index.php?page=log_viewer><img src=images/alarm_event_log.png height=120px class='menu'>Check the event logs</a><br>";
+echo "<a href=index.php?page=media_sequence><img src=images/media_sequence.png height=120px class='menu'>Enter the Media sequence page</a><br>";
 if($arduino_connected == 1)
 {
 	echo "<a href=index.php?page=arduino_tracking><img src=images/arduino_tracking.png height=120px class='menu'>Monitor the Arduino</a><br>";
@@ -94,6 +95,5 @@ if($alarm_status == 5)
 }else{
 	echo "<a href=index.php?action=enter_management_mode><img src=images/rfid_management.png height=120px class='menu'>Enter management mode</a><br>";
 }
-echo "<a href=index.php?page=media_sequence><img src=images/media_sequence.png height=120px class='menu'>Enter the Media sequence page</a><br>";
 echo "</div>";
 ?>

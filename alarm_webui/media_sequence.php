@@ -25,8 +25,8 @@ echo "<center><table border='0' cellpadding='0' cellspacing='0' style='border-co
 		<td>File Name</td>
 		<td>Trigerring event</td>
 		<td>Trigerring origin</td>
-		<td>Action</td>
 		<td>Camera name</td>
+		<td>Action</td>
 	</tr>";
 while($row = $cctvlistresult->fetch_assoc()) {
 	echo "<tr style='border-bottom: 1px solid #ccc; line-height: 1.8em;'>
