@@ -1,5 +1,17 @@
 #!/bin/bash
 
+cd /opt/
+git clone https://github.com/tuxpilot/RIDS.git
+
+cd /opt/rids/bin
+cp central.service /etc/systemd/system
+cp arduino_capture.service /etc/systemd/system
+cp rfid_reader.service /etc/systemd/system
+chmod +x /etc/systemd/system/central.service
+chmod +x /etc/systemd/system/rfid_reader.service
+chmod +x /etc/systemd/system/arduino_capture.service
+cd /etc/systemd/system/
+
 READWRITEPASSWORD=$(openssl rand -base64 27)
 READONLYPASSWORD=$(openssl rand -base64 27)
 
@@ -24,8 +36,20 @@ openssl req -newkey rsa:4096 \
             -keyout /etc/ssl/private/rids.key \
             -subj "/C=EU/ST=Earth/L=Earth/O=HomeSecurity/OU=RIDS/CN=localrids"
 
+sed -i '/dtparam=spi=o/c\dtparam=spi=on' /boot/config.txt
 apt update -y
-apt install apache2 -y
+apt install omxplayer ffmpeg git python3 mariadb-common apache2 -y
+
+
+cd /tmp 
+git clone https://github.com/lthiery/SPI-Py.git
+cd /tmp/SPI-Py
+python setup.py install
+cd /tmp
+git clone https://github.com/EspaceRaspberryFrancais/RFID-RC522.git
+cd RFID-RC522
+pip3 install pi-rc522
+
 
 sed -i "/Listen 443/a Listen 8766" /etc/apache2/ports.conf
 
@@ -35,3 +59,7 @@ a2enmod ssl
 a2ensite /etc/apache2/sites-available/rids.conf
 
 systemctl restart apache2
+systemctl enable central.service
+systemctl enable rfid_reader.service
+systemctl enable arduino_capture.service
+
