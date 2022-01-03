@@ -502,12 +502,12 @@ event_log(){
 
 # Function with a Read-Only user to fetch mysql datas from the database
 sql_request_RO(){
-	mysql -u alarm_read_only crids -sN -e "${1};" -p"${ropswd}";
+	mysql -u alarm_read_only "${dbname}" -sN -e "${1};" -p"${ropswd}";
 }
 
 # Function with a Read-Write user to get mysql datas and write datas in the database
 sql_request_RW(){
-	mysql -u alarm_read_write crids -sN -e "${1};" -p"${rwpswd}";
+	mysql -u alarm_read_write "${dbname}" -sN -e "${1};" -p"${rwpswd}";
 }
 
 # Function to retrieve the timestamp of the last time a SMS was sent
@@ -527,8 +527,9 @@ gpio_array_load_up(){
 
 # Function to 'declare' and initiate all the variables and settings which will be used in the script
 global_settings_load_up(){
-	ropswd='password'
-	rwpswd='password'
+	ropswd=$(grep ropswd creds.dat | awk -F ' ' '{ print $2 }')
+	rwpswd=$(grep rwpswd creds.dat | awk -F ' ' '{ print $2 }')
+	dbname=$(grep dbname creds.dat | awk -F ' ' '{ print $2 }')
 
 	while read -a row
 		do	language="${row[1]}"
