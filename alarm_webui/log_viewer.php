@@ -16,8 +16,9 @@ if (!$logresult) {
 
 
 while($row = $logresult->fetch_assoc()) {
+    $LOG_TIMESTAMP = explode(".", $row['LOG_TIMESTAMP']);
     echo "<tr style='border-bottom: 1px solid #ccc; line-height: 1.8em;'>
-			<td>".$row['LOG_TIMESTAMP']."</td><td><img src=images/".$row['EVENT_LOG_ILLUSTRATION']." class='log_image'></td><td>".$row['LOG_CONTENT']."</td>
+			<td>".$LOG_TIMESTAMP[0]."</td><td><img src=images/".$row['EVENT_LOG_ILLUSTRATION']." class='log_image'></td><td>".$row['LOG_CONTENT']."</td>
 		  </tr>";
 }
 

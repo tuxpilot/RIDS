@@ -176,11 +176,11 @@ check_gpio_point_monitoring(){
 						sql_request_RW "UPDATE GPIO SET monitoring_gpio_current_state = '${monitoring_gpio_current_state}'" & disown >> /dev/null 2>&1
 						gpio_flag[$monitoring_gpio_number]="0"
 						case "${alarm_status}" in
-							0|1)	capture_video_cctv notification_door_opened "${monitoring_gpio_name}"
+							0|1)	capture_video_cctv door_open "${monitoring_gpio_name}"
 									gpio_flag[$monitoring_gpio_number]="1"
 									;;
 
-							2|3|4)	capture_video_cctv alert_intrusion "${monitoring_gpio_name}"
+							2|3|4)	capture_video_cctv alarm_state_3 "${monitoring_gpio_name}"
 									gpio_flag[$monitoring_gpio_number]="1"
 									;;
 						esac
@@ -594,7 +594,7 @@ global_settings_load_up(){
 	if [[ "${alarm_status_before_restart}" != 0 && "${alarm_status_before_restart}" != 5 ]]
 		then	sql_request_RW "UPDATE ALERT_TRACKING SET LAST_SMS_TIMESTAMP = `date +%s`"
 					sound_player "${audio_signal_type}" message_alarm_central_rebooted
-					capture_video_cctv alert_intrusion 'central_event' default
+					capture_video_cctv alarm_restart_loading 'central_event' default
 					send_sms central_rebooted
 					event_log "The centrale was rebooted or reloaded while it was NOT in idle or management mode. The alarm status was ${alarm_status_before_restart} before this."
 					debug "The centrale was rebooted or reloaded while it was NOT in idle or management mode. The alarm status was ${alarm_status_before_restart} before this."
@@ -626,7 +626,7 @@ if [[ $(awk '{print $1}' /proc/uptime | awk -F '.' '{ print $1 }') -lt 120 && "$
 	then	send_sms central_rebooted
 			sql_request_RW "UPDATE ALERT_TRACKING SET LAST_SMS_TIMESTAMP = `date +%s`"
 			sound_player "${audio_signal_type}" message_alarm_central_rebooted
-			capture_video_cctv alert_intrusion 'central_event' default
+			capture_video_cctv alarm_restart_loading 'central_event' default
 fi
 
 # Everytime the Rasberry restart or the service restart, we need to know it. So we add this as an event to the event log.
@@ -803,7 +803,7 @@ while true; do
 			siren_end=$((SECONDS+"${alarm_siren_max_time}"))
 			sound_player "${audio_signal_type}" alterna_120 intrusion
 			sql_request_RW "UPDATE ALARM_TRACKING SET CURRENT_STATUS = '${alarm_status}'"
-			capture_video_cctv alert_intrusion 'central_event' default
+			capture_video_cctv alarm_state_3 'central_event' default
 			arduino_capture
 			while [[ $SECONDS -lt $siren_end ]]
 				do	sleep 0.7
@@ -857,7 +857,7 @@ while true; do
 			siren_end=$((SECONDS+"${alarm_siren_max_time}"))
 			sound_player "${audio_signal_type}" alterna_120 intrusion
 			sql_request_RW "UPDATE ALARM_TRACKING SET CURRENT_STATUS = '${alarm_status}'"
-			capture_video_cctv alert_intrusion 'central_event' default
+			capture_video_cctv alarm_state_3 'central_event' default
 			while [[ $SECONDS -lt $siren_end ]]
 				do	sleep 0.7
 					rfid_reader 4

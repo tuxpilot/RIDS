@@ -80,6 +80,10 @@ table.rfid_management
 
 img.log_image {
   vertical-align:middle;
+	text-align: center;
+	margin-left: auto;
+	margin-right: auto;
+	display: flex;
   height:70px;
 }
 

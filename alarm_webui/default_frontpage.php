@@ -12,6 +12,7 @@ if(isset($_GET['action']))
 
 	if($action == "enter_management_mode" && $alarm_status == 0)
 	{
+		include ('db-rw-connect.php');
 		$mode_changer_query = sprintf("UPDATE SETTINGS SET central_mode_override = '5'");
 		$mode_changer = $conn->query($mode_changer_query);
 		if (!$mode_changer) {
@@ -23,6 +24,7 @@ if(isset($_GET['action']))
 	}
 	if($action == "webui_alarm_arming" && $alarm_status == 0)
 	{
+		include ('db-rw-connect.php');
 		$mode_changer_query = sprintf("UPDATE SETTINGS SET central_mode_override = '2'");
 		$mode_changer = $conn->query($mode_changer_query);
 		if (!$mode_changer) {
@@ -42,6 +44,7 @@ if(isset($_GET['action']))
 	}
 	if($action == "leave_management_mode" && $alarm_status == 5)
 	{
+		include ('db-rw-connect.php');
 		$mode_changer_query = sprintf("UPDATE SETTINGS SET central_mode_override = '0'");
 		$mode_changer = $conn->query($mode_changer_query);
 		if (!$mode_changer) {
