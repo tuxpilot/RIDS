@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "WARNING!!!  THIS INSTALL will MODIFY your current installation by INSTALLING : "
-echo "omxplayer ffmpeg git python3 mariadb-common apache2"
+echo "aplay ffmpeg git python3 mariadb-common apache2 raspi-gpio"
 echo "IF and only IF you wish to continue, because you are aware that it will not disturb your configuration, enter 'YES', otherwize, write 'NO' and do this installation on a device that will accept this configuration."
 echo "It is STRONGLY recomanded to do this install on a dedicated device !"
 read firstack
@@ -66,7 +66,7 @@ openssl req -newkey rsa:4096 \
 
 sed -i '/dtparam=spi=o/c\dtparam=spi=on' /boot/config.txt
 apt update -y
-apt install omxplayer ffmpeg git python3 mariadb-common apache2 -y
+apt install aplay ffmpeg git python3 mariadb-common apache2 raspi-gpio -y
 
 
 cd /tmp
