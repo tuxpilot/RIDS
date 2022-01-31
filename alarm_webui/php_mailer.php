@@ -1,5 +1,11 @@
 <?php
 include ('db-ro-connect.php');
+$language_query = sprintf("SELECT language FROM SETTINGS");
+$language_res = $conn->query($language_query);
+
+while($row = $language_res->fetch_assoc()) {
+	 $language=$row['language'];
+}
 
 require 'PHPMailer/src/PHPMailer.php';
 require 'PHPMailer/src/SMTP.php';
@@ -8,14 +14,14 @@ require 'PHPMailer/src/Exception.php';
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-$event_include_attachment='no';
+$message_include_attachment='no';
 if (isset($argc)) {
 	for ($i = 0; $i < $argc; $i++) {
-    if (strpos($argv[$i], 'event_include_attachment') !== false) {
-      $event_include_attachment='yes';
+    if (strpos($argv[$i], 'message_include_attachment') !== false) {
+      $message_include_attachment='yes';
     }
     if (strpos($argv[$i], 'event') !== false) {
-      $template_text=$argv[$i];
+			$template_text = $argv[$i];
     }
 	}
 }
@@ -52,7 +58,7 @@ while($row = $mail_recipient_result->fetch_assoc()) {
     $mail->Port = $SMTP_SERVER_PORT;
     $mail->setFrom($SMTP_USERNAME, 'RIDS Alarm');
     $mail->addAddress($row['recipient_address_mail'], 'RIDS Alarm');
-    if($row['include_image_captures'] == "1" && $event_include_attachment == 'yes'){
+    if($row['include_image_captures'] == "1" && $message_include_attachment == 'yes'){
       $mail->addAttachment('images/logo.png', 'attachment.jpg');
     }
     $mail->isHTML(true);
@@ -60,7 +66,7 @@ while($row = $mail_recipient_result->fetch_assoc()) {
     $mail->Subject = 'RIDS ALARM notification';
     $mail->AddEmbeddedImage("images/logo.png", "rids_logo.png");
     $fp = fopen("mail_templates/fr_".$template_text.".html", "r");
-    $str = fread($fp, filesize("mail_templates/fr_".$template_text.".html"));
+    $str = fread($fp, filesize("mail_templates/".$language."_".$template_text.".html"));
     $mail->Body = $str;
     fclose($fp);
 

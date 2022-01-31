@@ -17,17 +17,17 @@ led_status(){
 	if [[ "${gpio_status_led_enabled}" -eq 1 && "${led_type}" == 'SINGLE_led_status' ]]
 		then	case "${1}" in
 					set_up_gpio)
-						gpio -g mode "${gpio_status_led_pwr}" OUT
-						gpio -g write "${gpio_status_led_pwr}" 0
+						raspi-gpio set  "${gpio_status_led_pwr}" op
+						raspi-gpio set "${gpio_status_led_pwr}" dl
 						;;
 
 					*)
 						pkill -f SINGLE_led_status
-						gpio -g write "${gpio_status_led_pwr}" 1
+						raspi-gpio set "${gpio_status_led_pwr}" dh
 						if [[ "${2}" -ne 999 ]]
 							then	sleep "${2}"
 						fi
-						gpio -g write "${gpio_status_led_green}" 0
+						raspi-gpio set "${gpio_status_led_green}" dl
 						;;
 				esac
 	fi
@@ -35,94 +35,94 @@ led_status(){
 	if [[ "${gpio_status_led_enabled}" -eq 1 && "${led_type}" == 'RGB_led_status' ]]
 		then	case "${1}" in
 					set_up_gpio)
-						gpio -g mode "${gpio_status_led_pwr}" OUT
-						gpio -g mode "${gpio_status_led_red}" OUT
-						gpio -g mode "${gpio_status_led_blue}" OUT
-						gpio -g mode "${gpio_status_led_green}" OUT
-						gpio -g write "${gpio_status_led_pwr}" 0
-						gpio -g write "${gpio_status_led_red}" 0
-						gpio -g write "${gpio_status_led_blue}" 0
-						gpio -g write "${gpio_status_led_green}" 0
+						raspi-gpio set  "${gpio_status_led_pwr}" op
+						raspi-gpio set  "${gpio_status_led_red}" op
+						raspi-gpio set  "${gpio_status_led_blue}" op
+						raspi-gpio set  "${gpio_status_led_green}" op
+						raspi-gpio set "${gpio_status_led_pwr}" dl
+						raspi-gpio set "${gpio_status_led_red}" dl
+						raspi-gpio set "${gpio_status_led_blue}" dl
+						raspi-gpio set "${gpio_status_led_green}" dl
 						;;
 
 					green)
 						pkill -f RGB_led_status
-						gpio -g write "${gpio_status_led_green}" 1
+						raspi-gpio set "${gpio_status_led_green}" dh
 						if [[ "${2}" -ne 999 ]]
 							then	sleep "${2}"
 						fi
-						gpio -g write "${gpio_status_led_green}" 0
+						raspi-gpio set "${gpio_status_led_green}" dl
 						;;
 
 					blue)
 						pkill -f RGB_led_status
-						gpio -g write "${gpio_status_led_blue}" 1
+						raspi-gpio set "${gpio_status_led_blue}" dh
 						if [[ "${2}" -ne 999 ]]
 							then	sleep "${2}"
 						fi
-						gpio -g write "${gpio_status_led_blue}" 0
+						raspi-gpio set "${gpio_status_led_blue}" dl
 						;;
 
 					red)
 						pkill -f RGB_led_status
-						gpio -g write "${gpio_status_led_red}" 1
+						raspi-gpio set "${gpio_status_led_red}" dh
 						if [[ "${2}" -ne 999 ]]
 							then	sleep "${2}"
 						fi
-						gpio -g write "${gpio_status_led_red}" 0
+						raspi-gpio set "${gpio_status_led_red}" dl
 						;;
 
 					purple)
 						pkill -f RGB_led_status
-						gpio -g write "${gpio_status_led_red}" 1
-						gpio -g write "${gpio_status_led_blue}" 1
+						raspi-gpio set "${gpio_status_led_red}" dh
+						raspi-gpio set "${gpio_status_led_blue}" dh
 						if [[ "${2}" -ne 999 ]]
 							then	sleep "${2}"
 						fi
-						gpio -g write "${gpio_status_led_red}" 0
-						gpio -g write "${gpio_status_led_blue}" 0
+						raspi-gpio set "${gpio_status_led_red}" dl
+						raspi-gpio set "${gpio_status_led_blue}" dl
 						;;
 
 					yellow)
 						pkill -f RGB_led_status
-						gpio -g write "${gpio_status_led_red}" 1
-						gpio -g write "${gpio_status_led_green}" 1
+						raspi-gpio set "${gpio_status_led_red}" dh
+						raspi-gpio set "${gpio_status_led_green}" dh
 						if [[ "${2}" -ne 999 ]]
 							then	sleep "${2}"
 						fi
-						gpio -g write "${gpio_status_led_red}" 0
-						gpio -g write "${gpio_status_led_green}" 0
+						raspi-gpio set "${gpio_status_led_red}" dl
+						raspi-gpio set "${gpio_status_led_green}" dl
 						;;
 
 					cyan)
 						pkill -f RGB_led_status
-						gpio -g write "${gpio_status_led_green}" 1
-						gpio -g write "${gpio_status_led_blue}" 1
+						raspi-gpio set "${gpio_status_led_green}" dh
+						raspi-gpio set "${gpio_status_led_blue}" dh
 						if [[ "${2}" -ne 999 ]]
 							then	sleep "${2}"
 						fi
-						gpio -g write "${gpio_status_led_green}" 0
-						gpio -g write "${gpio_status_led_blue}" 0
+						raspi-gpio set "${gpio_status_led_green}" dl
+						raspi-gpio set "${gpio_status_led_blue}" dl
 						;;
 
 					white)
 						pkill -f RGB_led_status
-						gpio -g write "${gpio_status_led_red}" 1
-						gpio -g write "${gpio_status_led_blue}" 1
-						gpio -g write "${gpio_status_led_green}" 1
+						raspi-gpio set "${gpio_status_led_red}" dh
+						raspi-gpio set "${gpio_status_led_blue}" dh
+						raspi-gpio set "${gpio_status_led_green}" dh
 						if [[ "${2}" -ne 999 ]]
 							then	sleep "${2}"
 						fi
-						gpio -g write "${gpio_status_led_red}" 0
-						gpio -g write "${gpio_status_led_blue}" 0
-						gpio -g write "${gpio_status_led_green}" 0
+						raspi-gpio set "${gpio_status_led_red}" dl
+						raspi-gpio set "${gpio_status_led_blue}" dl
+						raspi-gpio set "${gpio_status_led_green}" dl
 						;;
 
 					off)
 						pkill -f RGB_led_status
-						gpio -g write "${gpio_status_led_red}" 0
-						gpio -g write "${gpio_status_led_blue}" 0
-						gpio -g write "${gpio_status_led_green}" 0
+						raspi-gpio set "${gpio_status_led_red}" dl
+						raspi-gpio set "${gpio_status_led_blue}" dl
+						raspi-gpio set "${gpio_status_led_green}" dl
 						;;
 
 				esac
@@ -140,7 +140,7 @@ check_gpio_point_monitoring(){
 		do	monitoring_gpio_number=$(echo $gpio_array["${current_access_points_to_monitor}"] | awk -F ' ' '{ print $2 }')
 			monitoring_gpio_value_access_closed=$(echo $gpio_array["${current_access_points_to_monitor}"] | awk -F ' ' '{ print $3 }')
 			monitoring_gpio_name=$(echo $gpio_array["${current_access_points_to_monitor}"] | awk -F ' ' '{ print $4 }')
-			monitoring_gpio_current_state=$(gpio -g read "${monitoring_gpio_number}")
+			monitoring_gpio_current_state=$(raspi-gpio get "${monitoring_gpio_number}" | awk -F 'level='  '{ print $2 }' | awk -F ' ' '{ print $1 }' )
 			tempo_trigger_alarm=$(echo $gpio_array["${current_access_points_to_monitor}"] | awk -F ' ' '{ print $6 }')
 			# gpio_open_flag=$(echo $gpio_array["${current_access_points_to_monitor}"] | awk -F ' ' '{ print $7 }')
 			gpio_open_flag="${gpio_flag[$monitoring_gpio_number]}"
@@ -160,7 +160,7 @@ check_gpio_point_monitoring(){
 						debug "The access point linked to the GPIO : ${monitoring_gpio_number}, named : ${monitoring_gpio_name}, is detected as open. We proceed to the alarm status 3"
 						event_log "alarm_state_3.png" "The access ${monitoring_gpio_name} triggered the temporisation of the alarm!!!"
 						sudo systemctl restart rfid_reader.service &
-						# capture_image_cctv
+
 			fi
 
 			# If the currently checked access point is opened, and is NOT a temporized access, and the alarm is not idle or being armed, then an intrusion is confirmed
@@ -215,6 +215,7 @@ arduino_capture(){
 					then	alarm_status=6
                 alarm_status_type='smoke'
 							  debug "An abnormal level of smoke has been detected by the smoke detector: we go the the alarm status 6 immediately"
+								send_email event_smoke_detected
 					else	debug "Smoke detector is online and the air smoke level are within the limits"
 				fi
 	fi
@@ -224,12 +225,14 @@ arduino_capture(){
 					then	debug "Warning! The detected temperature is above the limit."
 							if [[ "${arduino_temperature_trigger_on_value}" -eq 1 ]]
 								then	send_sms temperature_above
+											send_email event_temperature_above
 							fi
 				fi
 				if [[ "${detected_temperature}" -le "${arduino_temperature_trigger_on_value_below}" ]]
 					then	debug "Warning! The detected temperature is below the limit."
 							if [[ "${arduino_temperature_trigger_on_value}" -eq 1 ]]
 								then	send_sms temperature_below
+											send_email event_temperature_below
 							fi
 				fi
 	fi
@@ -239,12 +242,14 @@ arduino_capture(){
 					then	debug "Warning! The detected humidity is above the limit."
 							if [[ "${arduino_humidity_trigger_on_value}" -eq 1 ]]
 								then	send_sms humidity_above
+											send_email event_humidity_above
 							fi
 				fi
 				if [[ "${detected_humidity}" -le "${arduino_humidity_trigger_on_value_below}" ]]
 					then	debug "Warning! The detected humidity is below the limit."
 							if [[ "${arduino_humidity_trigger_on_value}" -eq 1 ]]
 								then	send_sms humidity_below
+											send_email event_humidity_below
 							fi
 				fi
 	fi
@@ -253,6 +258,7 @@ arduino_capture(){
           then	alarm_status=6
                 alarm_status_type='carbon_monoxide'
                 debug "An abnormal level of Carbon Monoxide has been detected by the Carbon Monoxide detector: we go the the alarm status 6 immediately"
+								send_email event_carbon_monoxide
           else	debug "Carbon Monoxide detector is online and the Carbon Monoxide level are within the limits"
         fi
   fi
@@ -273,7 +279,7 @@ send_sms(){
   						EMAIL_ADDRESS="${row[6]}"
   						recipient_name="${FIRST_NAME}_${LAST_NAME}"
   						# Based on the argument {1} retrieved from the function, we fetch the body of the sms and we send it to the recipient
-  						sms_message_body=$(grep "${1}" "language/${language}/sms_messages.txt" | awk -F '=' '{ print $2 }' )
+  						sms_message_body=$(grep "${1}" "language/${language}/text_messages.txt" | awk -F '=' '{ print $2 }' )
   						if [[ "${sms_sent}" -ne 1 && "${SEND_SMS}" -eq 1 ]]
   							then	php bin/OVH_API/php-ovh-dep/sms-sender.php "${SMS_NUMBER}" "${sms_message_body}" & disown >> /dev/null 2>&1
   						fi
@@ -358,7 +364,7 @@ rfid_reader(){
 								then	debug "We kill the piezo alarm"
 										pkill -f piezo
 										debug "Sending the reset of the piezo gpio"
-										gpio -g write "${gpio_piezo_number}" 0
+										raspi-gpio set "${gpio_piezo_number}" dl
 										sound_player "${audio_signal_type}" message_alarm_password_success
 										alarm_status=0
 										event_log "good_rfid_card.png" "Alarm disabled with the RFID card attributed to ${rfid_attribution}"
@@ -400,9 +406,9 @@ rfid_reader(){
 sound_player(){
 	if [[ "${silent_voice}" -eq 0 && "${2}" != *"alterna"* && "${audio_signal_type}" == *"voice"* ]]
 		then	if [[ ! "${alarm_status}" =~ ^('3'|'4')$ ]]
-					then	omxplayer --no-keys -o local "language/${language}/${2}.wav" Audio codec pcm_s16le channels 1 samplerate 16000 bitspersample 16 > /dev/null 2>&1
+					then	aplay "language/${language}/${2}.wav" > /dev/null 2>&1 &
 							debug "We play ${2}.wav"
-					else	omxplayer --no-keys -o local "language/${language}/${2}.wav" Audio codec pcm_s16le channels 1 samplerate 16000 bitspersample 16 > /dev/null 2>&1 &
+					else aplay "language/${language}/${2}.wav" > /dev/null 2>&1
 							debug "We play ${2}.wav"
 				fi
 	fi
@@ -418,7 +424,10 @@ sound_player(){
 
 
 
-
+send_email()
+{
+	php php_mailer.php "event_${1}"
+}
 
 
 
@@ -429,21 +438,13 @@ initiate_user_input(){
 				gpio_user_input_method_circuit_mode=$(sql_request_RO "select gpio_user_input_method_circuit_mode from SETTINGS")
 				declare -n ref="opened_access_gpio_${gpio_user_input_method}"
 				ref=0
-				gpio -g mode "${gpio_user_input_method}" OUT
+				raspi-gpio set  "${gpio_user_input_method}" op
 				if [[ "${gpio_user_input_method_circuit_mode}" == "1" ]]
-					then	gpio -g write "${gpio_user_input_method}" 1
-					else	gpio -g write "${gpio_user_input_method}" 0
+					then	raspi-gpio set "${gpio_user_input_method}" dh
+					else	raspi-gpio set "${gpio_user_input_method}" dl
 				fi
 	fi
 }
-
-# Function made to capture still images from an IP camera
-capture_image_cctv(){
-    outfilename=`date +"img-%Y-%m-%d_%H-%M-%S.jpg"`
-	ffmpeg -loglevel fatal -rtsp_transport tcp -i "${video_capture_url}" -r 1 -vframes 1 "${image_capture_folder}${outfilename}"
-    #function sendmail avec piece jointe image
-}
-
 
 # Function set to capture the stream from a Ip Camera, streaming with RTSP functionnality // This function is available only if in the settings, the value "video_capture_enabled" is set to 1
 # By definition, if their is an IP Camera available and linked to the system, everytime an 'alert' event is detected, a video capture is made. Only if their is a notification kind of event and the 'video_capture_on_alert_only' value is set to 1 in the settings, then no video is made.
@@ -455,6 +456,7 @@ capture_video_cctv(){
 	if [[ "${video_capture_enabled}" -eq 1 ]]
 		then	# Setting up the name of the video clip
 				cctv_actual_filename=$(date +%Y-%m-%d_%H-%M-%S.mp4)
+				cctv_image_actual_filename=$(date +%Y-%m-%d_%H-%M-%S.jpg)
 				# If the argument1 is NOT 'alert' AND if the setting 'video_capture_on_alert_only' is set to 0 (disabled), then we capture the stream and put it in a video file, and we upload the datas to the database to be able to retrieve it in the WebUI
 				while read -a row
 					do	while read -a row2
@@ -467,12 +469,20 @@ capture_video_cctv(){
 										VIDEO_CAPTURE_TIMING="${row2[7]}"
 										if [[ "${1}" -ne "alert" && "${CAMERA_CAPTURE_ON_ALERT_ONLY}" -eq 0 ]]
 											then	nohup ffmpeg -t "${VIDEO_CAPTURE_TIMING}" -i rtsp://"${CAMERA_USERNAME}":"${CAMERA_PASSWORD}"@"${CAMERA_URL}" -c copy -map 0 -f segment -segment_time 600 -segment_format mp4 -strftime 1 "cctv_captures/${cctv_actual_filename}" -s '1920x1080' &
-													sql_request_RW "INSERT INTO CCTV_CAPTURES ( ID, FILENAME, TRIGGERING_ORIGIN, TRIGGERING_EVENT, CAMERA_NAME ) VALUES ( NULL, '${cctv_actual_filename}', '${2}', '${1}', '${CAMERA_NAME}')"
+														sql_request_RW "INSERT INTO CCTV_CAPTURES ( ID, FILENAME, TRIGGERING_ORIGIN, TRIGGERING_EVENT, CAMERA_NAME ) VALUES ( NULL, '${cctv_actual_filename}', '${2}', '${1}', '${CAMERA_NAME}')"
+														ffmpeg -rtsp_transport tcp -y -i rtsp://"${CAMERA_USERNAME}":"${CAMERA_PASSWORD}"@"${CAMERA_URL}" -r 10 -f image2 "cctv_captures/$cctv_image_actual_filename"
+														sleep 1; php php_mailer.php "event_${2}" message_include_attachment "cctv_captures/$cctv_image_actual_filename"
+											else	ffmpeg -rtsp_transport tcp -y -i rtsp://"${CAMERA_USERNAME}":"${CAMERA_PASSWORD}"@"${CAMERA_URL}" -r 10 -f image2 "cctv_captures/$cctv_image_actual_filename"
+														sleep 1; php php_mailer.php "event_${2}" message_include_attachment "cctv_captures/$cctv_image_actual_filename"
 										fi
 										# If the argument is 'alert', then we capture the stream and put it in a video file, and we upload the datas to the database to be able to retrieve it in the WebUI
 										if [[ "${1}" -eq "alert" ]]
 											then	nohup ffmpeg -t "${VIDEO_CAPTURE_TIMING}" -i rtsp://"${CAMERA_USERNAME}":"${CAMERA_PASSWORD}"@"${CAMERA_URL}" -c copy -map 0 -f segment -segment_time 600 -segment_format mp4 -strftime 1 "cctv_captures/${cctv_actual_filename}" -s '1920x1080' &
-													sql_request_RW "INSERT INTO CCTV_CAPTURES ( ID, FILENAME, TRIGGERING_ORIGIN, TRIGGERING_EVENT, CAMERA_NAME ) VALUES ( NULL, '${cctv_actual_filename}', '${2}', '${1}', '${CAMERA_NAME}')"
+														sql_request_RW "INSERT INTO CCTV_CAPTURES ( ID, FILENAME, TRIGGERING_ORIGIN, TRIGGERING_EVENT, CAMERA_NAME ) VALUES ( NULL, '${cctv_actual_filename}', '${2}', '${1}', '${CAMERA_NAME}')"
+														ffmpeg -rtsp_transport tcp -y -i rtsp://"${CAMERA_USERNAME}":"${CAMERA_PASSWORD}"@"${CAMERA_URL}" -r 10 -f image2 "cctv_captures/$cctv_image_actual_filename"
+														sleep 1; php php_mailer.php "event_${2}" message_include_attachment "cctv_captures/$cctv_image_actual_filename"
+											else	ffmpeg -rtsp_transport tcp -y -i rtsp://"${CAMERA_USERNAME}":"${CAMERA_PASSWORD}"@"${CAMERA_URL}" -r 10 -f image2 "cctv_captures/$cctv_image_actual_filename"
+														sleep 1; php php_mailer.php "event_${2}" message_include_attachment "cctv_captures/$cctv_image_actual_filename"
 										fi
 										debug "CAMERA !!!!!! nohup ffmpeg -t ${VIDEO_CAPTURE_TIMING} -i rtsp://${CAMERA_USERNAME}:${CAMERA_PASSWORD}@${CAMERA_URL} -c copy -map 0 -f segment -segment_time 600 -segment_format mp4 -strftime 1 cctv_captures/${cctv_actual_filename} -s '1920x1080'&"
 								done <<< $(sql_request_RO "SELECT * FROM CAMERAS_MANAGEMENT WHERE ID = '${row[0]}'")
@@ -603,14 +613,14 @@ global_settings_load_up(){
 	password_attempt=0
 	alarm_status="${default_alarm_status}"
 	if	[[ "${gpio_piezo_number}" -ne 99 ]] # If the GPIO is not 99, then their is a piezo connected and we have to initiate it.
-		then	gpio -g mode "${gpio_piezo_number}" out
-				gpio -g write "${gpio_piezo_number}" 0
+		then	raspi-gpio set "${gpio_piezo_number}" op
+				raspi-gpio set "${gpio_piezo_number}" dl
 	fi
 	while read -a row
-		do	gpio -g mode "${row[0]}" OUT
-			gpio -g write "${row[0]}" 1
-			monitoring_gpio_number="${row[0]}"
-			gpio_flag[$monitoring_gpio_number]="0"
+		do	raspi-gpio set "${row[0]}" op
+				raspi-gpio set "${row[0]}" dh
+				monitoring_gpio_number="${row[0]}"
+				gpio_flag[$monitoring_gpio_number]="0"
 	done <<< $(sql_request_RO "select monitoring_gpio_number from GPIO")
 	echo "" > rfid_reader_capture.txt
 	sudo systemctl restart rfid_reader.service
@@ -626,6 +636,7 @@ if [[ $(awk '{print $1}' /proc/uptime | awk -F '.' '{ print $1 }') -lt 120 && "$
 	then	send_sms central_rebooted
 			sql_request_RW "UPDATE ALERT_TRACKING SET LAST_SMS_TIMESTAMP = `date +%s`"
 			sound_player "${audio_signal_type}" message_alarm_central_rebooted
+			send_email event_central_rebooted
 			capture_video_cctv alarm_restart_loading 'central_event' default
 fi
 
@@ -711,6 +722,7 @@ while true; do
 									led_status red 999 & disown
 									debug "We proceed to alarm status 2"
 									event_log "alarm_monitoring.png" "Alarm is now activated and monitoring."
+									send_email event_rids_armed_and_running
 						fi
 						rfid_reader_result=0
 				else	event_log "alarm_unlocked.png" "Alarm arming canceled command received because an access point configured as mandatory closed for arming is still detected as opened"
@@ -729,7 +741,6 @@ while true; do
 						if [[ "${rfid_reader_result}" -eq 2 ]]
 							then	password_attempt=$(expr "${password_attempt}" + 1)
 									event_log "wrong_rfid_card.png" "Unsuccessful attempt to unlock the alarm with RFID attributed to ${rfid_attribution}"
-									# capture_image_cctv
 						fi
 						debug "We saw ${password_attempt} unsuccessful attempts of trying to unlock the alarm"
 			fi
@@ -768,7 +779,7 @@ while true; do
 					if [[ "${password_attempt}" -lt 3 ]]
 						then	if [[ "${rfid_reader_result}" -eq 2 ]]
 									then	password_attempt=$(expr "${password_attempt}" + 1)
-											# capture_image_cctv
+
 											debug "We saw ${password_attempt} unsuccessful attempts of trying to unlock the alarm"
 								fi
 								if [[ "${rfid_reader_result}" -eq 1 ]]
@@ -796,6 +807,7 @@ while true; do
 			debug "We are in the status 4"
 			event_log "alarm_siren_on.png" "Intrusion alarm was triggered!"
 			send_sms intrusion
+			send_email event_intrusion
 			sms_sent=1
 			sound_player "${audio_signal_type}" message_alarm_intrusion_confirmed
 			led_status red 120 & disown
@@ -826,7 +838,8 @@ while true; do
 			sql_request_RW "UPDATE ALARM_TRACKING SET CURRENT_STATUS = '${alarm_status}'"
 			override_mode=$(sql_request_RO "select central_mode_override from SETTINGS")
 			debug "The central_mode_override read is : ${override_mode}"
-			if [[ "${override_mode}" -eq 0 ]]
+			send_email event_management_mode_on
+			if [[ "${override_mode}" -eq 9 ]]
 				then	global_settings_load_up
 						sleep 2
 						event_log "alarm_restart_loading.png" "The alarm has finished reloading the global settings"
@@ -842,6 +855,7 @@ while true; do
 						sound_player "${audio_signal_type}" message_alarm_management_mode_left
 						sql_request_RW "UPDATE SETTINGS SET central_mode_override = '0'"
 						event_log "alarm_management_mode_off.png" "The alarm has left Management mode"
+						send_email event_management_mode_off
 			fi
 		;;
 

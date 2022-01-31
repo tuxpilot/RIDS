@@ -53,6 +53,7 @@ sed -i 's/RWTBD_pass/${READWRITEPASSWORD}/g' /opt/rids/alarm_webui/db-rw-connect
 
 ln -s /opt/rids/alarm_webui /var/www/rids
 ln -s /opt/rids/cctv_captures /opt/rids/alarm_webui/cctv_captures
+ln -s /opt/rids/language /opt/rids/alarm_webui/language
 
 
 openssl req -newkey rsa:4096 \
