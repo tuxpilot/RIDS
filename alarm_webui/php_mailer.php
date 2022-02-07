@@ -59,14 +59,14 @@ while($row = $mail_recipient_result->fetch_assoc()) {
     $mail->setFrom($SMTP_USERNAME, 'RIDS Alarm');
     $mail->addAddress($row['recipient_address_mail'], 'RIDS Alarm');
     if($row['include_image_captures'] == "1" && $message_include_attachment == 'yes'){
-      $mail->addAttachment('images/logo.png', 'attachment.jpg');
+      $mail->addAttachment('alarm_webui/images/logo.png', 'attachment.jpg');
     }
     $mail->isHTML(true);
     $mail->CharSet="UTF-8";
     $mail->Subject = 'RIDS ALARM notification';
-    $mail->AddEmbeddedImage("images/logo.png", "rids_logo.png");
-    $fp = fopen("mail_templates/fr_".$template_text.".html", "r");
-    $str = fread($fp, filesize("mail_templates/".$language."_".$template_text.".html"));
+    $mail->AddEmbeddedImage("alarm_webui/images/logo.png", "rids_logo.png");
+    $fp = fopen("alarm_webui/mail_templates/fr_".$template_text.".html", "r");
+    $str = fread($fp, filesize("alarm_webui/mail_templates/".$language."_".$template_text.".html"));
     $mail->Body = $str;
     fclose($fp);
 

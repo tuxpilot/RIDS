@@ -176,11 +176,11 @@ check_gpio_point_monitoring(){
 						sql_request_RW "UPDATE GPIO SET monitoring_gpio_current_state = '${monitoring_gpio_current_state}'" & disown >> /dev/null 2>&1
 						gpio_flag[$monitoring_gpio_number]="0"
 						case "${alarm_status}" in
-							0|1)	capture_video_cctv door_open "${monitoring_gpio_name}"
+							0|1)	capture_video_cctv door_open "${monitoring_gpio_name}" & disown
 									gpio_flag[$monitoring_gpio_number]="1"
 									;;
 
-							2|3|4)	capture_video_cctv alarm_state_3 "${monitoring_gpio_name}"
+							2|3|4)	capture_video_cctv alarm_state_3 "${monitoring_gpio_name}" & disown
 									gpio_flag[$monitoring_gpio_number]="1"
 									;;
 						esac
@@ -471,20 +471,24 @@ capture_video_cctv(){
 											then	nohup ffmpeg -t "${VIDEO_CAPTURE_TIMING}" -i rtsp://"${CAMERA_USERNAME}":"${CAMERA_PASSWORD}"@"${CAMERA_URL}" -c copy -map 0 -f segment -segment_time 600 -segment_format mp4 -strftime 1 "cctv_captures/${cctv_actual_filename}" -s '1920x1080' &
 														sql_request_RW "INSERT INTO CCTV_CAPTURES ( ID, FILENAME, TRIGGERING_ORIGIN, TRIGGERING_EVENT, CAMERA_NAME ) VALUES ( NULL, '${cctv_actual_filename}', '${2}', '${1}', '${CAMERA_NAME}')"
 														ffmpeg -rtsp_transport tcp -y -i rtsp://"${CAMERA_USERNAME}":"${CAMERA_PASSWORD}"@"${CAMERA_URL}" -r 10 -f image2 "cctv_captures/$cctv_image_actual_filename"
-														sleep 1; php php_mailer.php "event_${2}" message_include_attachment "cctv_captures/$cctv_image_actual_filename"
+														#sleep 1; php php_mailer.php "event_${2}" message_include_attachment "cctv_captures/$cctv_image_actual_filename"
+														php alarm_webui/php_mailer.php "event_${2}" & disown
 											else	ffmpeg -rtsp_transport tcp -y -i rtsp://"${CAMERA_USERNAME}":"${CAMERA_PASSWORD}"@"${CAMERA_URL}" -r 10 -f image2 "cctv_captures/$cctv_image_actual_filename"
-														sleep 1; php php_mailer.php "event_${2}" message_include_attachment "cctv_captures/$cctv_image_actual_filename"
+														#sleep 1; php php_mailer.php "event_${2}" message_include_attachment "cctv_captures/$cctv_image_actual_filename"
+														php alarm_webui/php_mailer.php "event_${2}" & disown
 										fi
 										# If the argument is 'alert', then we capture the stream and put it in a video file, and we upload the datas to the database to be able to retrieve it in the WebUI
 										if [[ "${1}" -eq "alert" ]]
 											then	nohup ffmpeg -t "${VIDEO_CAPTURE_TIMING}" -i rtsp://"${CAMERA_USERNAME}":"${CAMERA_PASSWORD}"@"${CAMERA_URL}" -c copy -map 0 -f segment -segment_time 600 -segment_format mp4 -strftime 1 "cctv_captures/${cctv_actual_filename}" -s '1920x1080' &
 														sql_request_RW "INSERT INTO CCTV_CAPTURES ( ID, FILENAME, TRIGGERING_ORIGIN, TRIGGERING_EVENT, CAMERA_NAME ) VALUES ( NULL, '${cctv_actual_filename}', '${2}', '${1}', '${CAMERA_NAME}')"
 														ffmpeg -rtsp_transport tcp -y -i rtsp://"${CAMERA_USERNAME}":"${CAMERA_PASSWORD}"@"${CAMERA_URL}" -r 10 -f image2 "cctv_captures/$cctv_image_actual_filename"
-														sleep 1; php php_mailer.php "event_${2}" message_include_attachment "cctv_captures/$cctv_image_actual_filename"
+														#php alarm_webui/php_mailer.php "event_${2}" message_include_attachment "cctv_captures/$cctv_image_actual_filename" & disown
+														php alarm_webui/php_mailer.php "event_${2}" & disown
 											else	ffmpeg -rtsp_transport tcp -y -i rtsp://"${CAMERA_USERNAME}":"${CAMERA_PASSWORD}"@"${CAMERA_URL}" -r 10 -f image2 "cctv_captures/$cctv_image_actual_filename"
-														sleep 1; php php_mailer.php "event_${2}" message_include_attachment "cctv_captures/$cctv_image_actual_filename"
+														#php php_mailer.php "event_${2}" message_include_attachment "cctv_captures/$cctv_image_actual_filename" & disown
+														php alarm_webui/php_mailer.php "event_${2}" & disown
 										fi
-										debug "CAMERA !!!!!! nohup ffmpeg -t ${VIDEO_CAPTURE_TIMING} -i rtsp://${CAMERA_USERNAME}:${CAMERA_PASSWORD}@${CAMERA_URL} -c copy -map 0 -f segment -segment_time 600 -segment_format mp4 -strftime 1 cctv_captures/${cctv_actual_filename} -s '1920x1080'&"
+										debug "Camera function was called, we started the capture from ${CAMERA_URL}, the capture was stored in the file : cctv_captures/${cctv_actual_filename}"
 								done <<< $(sql_request_RO "SELECT * FROM CAMERAS_MANAGEMENT WHERE ID = '${row[0]}'")
 				done <<< $(sql_request_RO "SELECT ID FROM CAMERAS_MANAGEMENT WHERE CAMERA_GPIO_LINK LIKE '%${3}%'")
 	fi
@@ -754,8 +758,8 @@ while true; do
 	# This is the alarm state where the alarm detected the opening of a temporised access point (ie :the front door), and is waiting for the user to authenticate as a legit human, getting inside the protected perimeter.
 		3)	sleep 0.6
 			debug "We are in the status 3  && Door opening detected !!!!"
-			sound_player "${audio_signal_type}" alterna_4 notification
-			sound_player "${audio_signal_type}" message_alarm_intrusion_detected
+			sound_player "${audio_signal_type}" alterna_4 notification & disown
+			sound_player "${audio_signal_type}" message_alarm_intrusion_detected & disown
 			open_tempo_end=$((SECONDS+"${alarm_temporisation_delay}"))
 			last_call_sent=0
 			sql_request_RW "UPDATE ALARM_TRACKING SET CURRENT_STATUS = '${alarm_status}'"
